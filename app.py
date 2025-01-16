@@ -148,7 +148,7 @@ def send_diabetes():
     # สร้างรายการคำแนะนำเพิ่มเติม
     recommendations = []
     if bmi > 24.9:
-        recommendations.append("- aaaaaaaaaaaaaaaaaaaaaaclscls")
+        recommendations.append("- ใหม่")
     if visceral > 9:
         recommendations.append("- ลดการบริโภคอาหารที่มีน้ำตาลและไขมันทรานส์")
     if wc >= 0.50:
