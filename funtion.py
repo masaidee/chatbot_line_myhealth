@@ -11,16 +11,6 @@ from scipy.stats import linregress
 from flask_cors import CORS
 from matplotlib import font_manager as fm
 from datetime import datetime  # Import the datetime class
-from payload import (
-    flex_predict_blood_fat,
-    flex_analysis_data_blood_fat,
-    flex_recommendations_blood_fat,
-    flex_predict_diabetes,
-    flex_analysis_data_diabetes,
-    flex_recommendations_diabetes,
-    flex,
-    flex2
-    )
 
     # โหลดโมเดลที่ใช้ทำนายโรคสมอง
 with open(r"C:\Users\Acer\masaidee\Internship\project\model_stroke_risk.pkl", 'rb') as model_file:
@@ -142,7 +132,7 @@ def compare_and_visualize_diabetes_data():
     plt.tight_layout()
     now = datetime.now()
     # แสดงวันที่และเวลาในรูปแบบที่ต้องการ
-    formatted_time = now.strftime("%d.%m.%Y-%H.%M.%S")
+    formatted_time = now.strftime("%d-%m-%Y.%H-%M-%S")
     user_dir = os.path.join(f"static/{user}")
     os.makedirs(user_dir, exist_ok=True)  # Ensure the directory exists
     graph_path = os.path.join(f"{user_dir}/{formatted_time}.png")
@@ -151,7 +141,7 @@ def compare_and_visualize_diabetes_data():
 
 
     print(formatted_time)
-    image_url = f"https://5593-223-206-78-182.ngrok-free.app/{graph_path}"
+    image_url = f"https://96a0-223-206-78-182.ngrok-free.app/{graph_path}"
 
 
     # send_comparison_result(user, comparison_result, image_url)
@@ -193,7 +183,7 @@ def Checkup_blood_fat():
         reply_text = "ไม่มีความเสี่ยง"
     else:
         reply_text = "มีความเสี่ยง"
-    
+        
     #แปลงตัวเลขเป็น ข้อความ 
     if Gender == 0:
         Gender_status = "ชาย"

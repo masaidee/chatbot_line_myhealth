@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Health Data Management</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Health Data Management</h1>
+
+    <!-- Form สำหรับ user_profiles -->
+    <h2>Add User Profile</h2>
+    <form action="/add_user" method="POST">
+        <label >userId:</label>
+        <input type="text" id="userId" name="userId" required>
+        <br>
+        <label >name:</label>
+        <input type="text" id="name" name="name" required>
+        <br>
+        <label >age:</label>
+        <input type="text" id="age" name="age" required>
+        <br>
+        <label >gender:</label>
+        <input type="text" id="gender" name="gender" required>
+        <br>
+        <label >height:</label>
+        <input type="text" id="height" name="height" required>
+        <br>
+        <label >weight:</label>
+        <input type="text" id="weight" name="weight" required>
+        <br>
+
+        <button type="submit">Add User</button>
+    </form>
+
+    <!-- Form สำหรับ diabetes_tests -->
+    <h2>Add Diabetes Test</h2>
+    <form action="/add_test" method="POST">
+        <label >userId:</label>
+        <input type="text" id="userId" name="userId" required>
+        <br>
+        <label >age:</label>
+        <input type="text" id="age" name="age" required>
+        <br>
+        <label >bmi:</label>
+        <input type="number" id="bmi" name="bmi" required>
+        <br>
+        <label >visceral:</label>
+        <input type="number" id="visceral" name="visceral" required>
+        <br>
+        <label >wc:</label>
+        <input type="number" id="wc" name="wc" required>
+        <br>
+        <label >ht:</label>
+        <input type="number" id="ht" name="ht" required>
+        <br>
+        <label >sbp:</label>
+        <input type="number" id="sbp" name="sbp" required>
+        <br>
+        <label >dbp:</label>
+        <input type="number" id="dbp" name="dbp" required>
+        <br>
+        <label >fbs:</label>
+        <input type="number" id="fbs" name="fbs" required>
+        <br>
+        <label >HbAlc:</label>
+        <input type="number" id="HbAlc" name="HbAlc" required>
+        <br>
+        <label >family_his:</label>
+        <input type="number" id="family_his" name="family_his" required>
+        <br>
+        <button type="submit">Add Test</button>
+    </form>
+
+    <!-- Form สำหรับ food_recommendations -->
+    <h2>Add Food Recommendation</h2>
+    <form action="/add_food" method="POST">
+        <label for="food_id">ID:</label>
+        <input type="text" id="food_id" name="food_id" required>
+        <br>
+        <label for="food_name">ชื่อ:</label>
+        <input type="text" id="food_name" name="food_name" required>
+        <br>
+        <label for="food_height">ส่วนสูง:</label>
+        <input type="number" id="food_height" name="food_height" required>
+        <br>
+        <button type="submit">Add Food</button>
+    </form>
+
+    <!-- Form สำหรับ daily_activities -->
+    <h2>Add Daily Activity</h2>
+    <form action="/add_activity" method="POST">
+        <label for="activity_id">ID:</label>
+        <input type="text" id="activity_id" name="activity_id" required>
+        <br>
+        <label for="activity_name">ชื่อ:</label>
+        <input type="text" id="activity_name" name="activity_name" required>
+        <br>
+        <label for="activity_height">ส่วนสูง:</label>
+        <input type="number" id="activity_height" name="activity_height" required>
+        <br>
+        <button type="submit">Add Activity</button>
+    </form>
+
+    <!-- แสดงข้อมูลจากทั้ง 4 collection -->
+    <h2>User Profiles</h2>
+    <ul>
+        {% for user in users %}
+            <li><strong>ID:</strong> {{ user._id }}, <strong>ชื่อ:</strong> {{ user['ชื่อ'] }}, <strong>ส่วนสูง:</strong> {{ user['ส่วนสูง'] }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Diabetes Tests</h2>
+    <ul>
+        {% for test in tests %}
+            <li><strong>ID:</strong> {{ test._id }}, <strong>ชื่อ:</strong> {{ test['ชื่อ'] }}, <strong>ส่วนสูง:</strong> {{ test['ส่วนสูง'] }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Food Recommendations</h2>
+    <ul>
+        {% for food in foods %}
+            <li><strong>ID:</strong> {{ food._id }}, <strong>ชื่อ:</strong> {{ food['ชื่อ'] }}, <strong>ส่วนสูง:</strong> {{ food['ส่วนสูง'] }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Daily Activities</h2>
+    <ul>
+        {% for activity in activities %}
+            <li><strong>ID:</strong> {{ activity._id }}, <strong>ชื่อ:</strong> {{ activity['ชื่อ'] }}, <strong>ส่วนสูง:</strong> {{ activity['ส่วนสูง'] }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
