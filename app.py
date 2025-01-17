@@ -41,6 +41,11 @@ Staggers_collection = db["Staggers"]       # สำหรับเก็บข�
 Diabetes_collection = db["Diabetes"]       # สำหรับเก็บข้อมูลโรคไขมันในเลือด
 blood_fat_collection = db["blood-fat"]       # สำหรับเก็บข้อมูลโรคไขมันในเลือด
 Disease_collection = db["Disease-status"]       # สำหรับเก็บข้อมูลความมเสี่ยง
+# กำหนด collection ทั้ง 4
+user_profiles = db['user_profiles']
+diabetes_tests = db['diabetes_tests']
+food_recommendations = db['food_recommendations']
+daily_activities = db['daily_activities']
 
 
 
@@ -50,17 +55,13 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 #sipsinse
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
 
-import warnings
-from sklearn.exceptions import InconsistentVersionWarning
-    
-warnings.filterwarnings("ignore", category=InconsistentVersionWarning)
 
 def serialize_user(user):
     user["_id"] = str(user["_id"])
     return user
 
 
-@app.route('/webhook', methods=['GET'])
+@app.route('/webhook1', methods=['GET'])
 def home():
     return "Hello, Flask!"
 # # 1. อ่านข้อมูลทั้งหมด (GET)
@@ -71,16 +72,6 @@ def home():
 
 @app.route('/', methods=['POST'])
 def MainFunction():
-    # req = request.get_json()
-
-    # # ดึงข้อมูลจาก Dialogflow
-    # user_id = req.get("originalDetectIntentRequest", {}).get("payload", {}).get("data", {}).get("source", {}).get("userId", "unknown_user")
-    # intent = req.get("queryResult", {}).get("intent", {}).get("displayName", "unknown_intent")
-    # parameters = req.get("queryResult", {}).get("parameters", "unknown_user")
-    # timestamp = datetime.now()
-
-
-
 
     # รับข้อมูลที่ส่งมาจาก Dialogflow
     question_from_dailogflow_raw = request.get_json(silent=True, force=True)
@@ -99,11 +90,7 @@ def generating_answer(question_from_dailogflow_raw):
 
     # ตรวจสอบค่า intent_name เพื่อเรียกใช้ฟังก์ชันที่ต้องการ 
     if intent_name == 'view_user_profile':#กรอกข้อมูลโรคสมอง ลงใน monggodb ทำนายโรคสมอง
-        answer_str = add_user() 
-    elif intent_name == 'Diabetes - custom':#กรอกข้อมูลโรคเบาหวาน ลงใน monggodb ทำนายโรคเบาหวาน
-        answer_str = (question_from_dailogflow_dict) 
-    elif intent_name == 'Blood fat - custom':#กรอกข้อมูลโรคไขมันในเลือด ลงใน monggodb ทำนายโรคไขมันในเลือด
-        answer_str = ()
+        answer_str = () 
 
     elif intent_name == 'compare':#กรอกข้อมูลโรคไขมันในเลือด ลงใน monggodb ทำนายโรคไขมันในเลือด
         answer_str = send_comparison_result()
@@ -111,8 +98,6 @@ def generating_answer(question_from_dailogflow_raw):
     elif intent_name == 'Checkup_blood-fat':  # ตรวจโรคไขมันในเลือดโดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
         answer_str = send_blood_fat()
     elif intent_name == 'Checkup_diabetes':  # ตรวจโรคเบาหวาน โดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
-        answer_str = send_diabetes()
-    elif intent_name == "view_user_profile":
         answer_str = send_diabetes()
     else:
         answer_str = "คุณต้องการแบบไหน"
@@ -311,80 +296,77 @@ def send_comparison_result():
     else:
         print(f"เกิดข้อผิดพลาดในการส่งข้อความa: {response.status_code}, {response.text}")
 
-@app.route('/api/user_profiles', methods=['GET'])
-def get_user_profile():
-    user_id = request.args.get('user_id')
-    user_profiles = db["user_profiles"]       # สำหรับเก็บข้อมูลความมเสี่ยง
-    try:
-        user_profile = user_profiles.find_one({"_id": 121})
-        if user_profile:
-            return jsonify(serialize_user(user_profile)), 200
-        else:
-            return jsonify({"error": "User profile not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+from flask import Flask, render_template, request, redirect
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 
 
-# @app.route('/add_user', methods=['POST'])
+
+
+
+
+# Route สำหรับหน้าแรก
+@app.route('/')
+def index():
+    # ดึงข้อมูลจากทั้ง 4 collection
+    users = user_profiles.find()
+    tests = Diabetes_collection.find()
+    foods = food_recommendations.find()
+    activities = daily_activities.find()
+    return render_template('index.html', users=users, tests=tests, foods=foods, activities=activities)
+
+# Route สำหรับเพิ่มข้อมูลใน user_profiles
+@app.route('/add_user', methods=['POST'])
 def add_user():
-    data = request.get_json()
-    user_id = data.get("_id")
-    name = data.get("name")
-    age = data.get("age")
-    gender = data.get("gender")
-    weight = data.get("weight")
-    height = data.get("height")
+    userId = request.form['userId']
+    name = request.form['name']
+    age = request.form['age']
+    gender = request.form['gender']
+    height = request.form['height']
+    weight = request.form['weight']
+    timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
+    user = {'userId': userId, 'name': name, 'age': age, 'gender': gender, 'height': height, 'weight': weight, 'timestamp': timestamp}
+    user_profiles.insert_one(user)
+    return redirect('/')
 
-    if not all([user_id, name, age, gender, weight, height]):
-        return jsonify({"error": "Missing data"}), 400
+# Route สำหรับเพิ่มข้อมูลใน diabetes_tests
+@app.route('/add_test', methods=['POST'])
+def add_test():
+    userId = request.form['userId']
+    age = request.form['age']
+    bmi = request.form['bmi']
+    visceral = request.form['visceral']
+    wc = request.form['wc']
+    ht = request.form['ht']
+    sbp = request.form['sbp']
+    dbp = request.form['dbp']
+    fbs = request.form['fbs']
+    HbAlc = request.form['HbAlc']
+    family_his = request.form['family_his']
+    timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
+    test = {'userId': userId, 'age': age, 'bmi': bmi, 'visceral': visceral, 'wc': wc, 'ht': ht, 'sbp': sbp, 'dbp': dbp, 'fbs': fbs, 'HbAlc': HbAlc, 'family_his': family_his, 'timestamp': timestamp}
+    Diabetes_collection.insert_one(test)
+    return redirect('/')
 
-    user_data = {
-        "_id": user_id,
-        "name": name,
-        "age": age,
-        "gender": gender,
-        "weight": weight,
-        "height": height
-    }
+# Route สำหรับเพิ่มข้อมูลใน food_recommendations
+@app.route('/add_food', methods=['POST'])
+def add_food():
+    id = request.form['food_id']
+    name = request.form['food_name']
+    height = request.form['food_height']
+    food = {'_id': id, 'ชื่อ': name, 'ส่วนสูง': height}
+    food_recommendations.insert_one(food)
+    return redirect('/')
 
-    try:
-        db.users.insert_one(user_data)
-        return jsonify({"message": "User added successfully"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/user_profiles', methods=['POST'])
-def add_user_profile():
-    
-    # user_profiles = db["user_profiles"] 
-    
-    data = request.get_json()
-    user_id = data.get("_id")
-    name = data.get("name")
-    age = data.get("age")
-    gender = data.get("gender")
-    weight = data.get("weight")
-    height = data.get("height")
-
-    if not all([user_id, name, age, gender, weight, height]):
-        return jsonify({"error": "Missing data"}), 400
-
-    user_profile_data = {
-        "_id": user_id,
-        "name": name,
-        "age": age,
-        "gender": gender,
-        "weight": weight,
-        "height": height
-    }
-
-    try:
-        db.user_profiles.insert_one(user_profile_data)
-        return jsonify({"message": "User profile added successfully"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
+# Route สำหรับเพิ่มข้อมูลใน daily_activities
+@app.route('/add_activity', methods=['POST'])
+def add_activity():
+    id = request.form['activity_id']
+    name = request.form['activity_name']
+    height = request.form['activity_height']
+    activity = {'_id': id, 'ชื่อ': name, 'ส่วนสูง': height}
+    daily_activities.insert_one(activity)
+    return redirect('/')
 
 
 
