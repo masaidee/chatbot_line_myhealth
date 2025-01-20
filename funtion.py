@@ -86,8 +86,8 @@ def compare_and_visualize_diabetes_data():
         "visceral": "ไขมันในช่องท้อง",
         "wc": "รอบเอว",
         "ht": "ความสูง",
-        "sbp": "ความดันโลหิตตัวบน",
-        "dbp": "ความดันโลหิตตัวล่าง",
+        "sbp": "ความดันตัวบน",
+        "dbp": "ความดันตัวล่าง",
         "fbs": "น้ำตาลในเลือด",
         "HbAlc": "ฮีโมโกลบิน A1c",
         "family_his": "ประวัติครอบครัว"
@@ -144,7 +144,7 @@ def compare_and_visualize_diabetes_data():
 
 
     print(formatted_time)
-    image_url = f"https://d655-223-206-78-182.ngrok-free.app/{graph_path}"
+    image_url = f"https://4224-223-206-78-182.ngrok-free.app/{graph_path}"
 
 
     # send_comparison_result(user, comparison_result, image_url)

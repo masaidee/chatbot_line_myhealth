@@ -243,7 +243,42 @@ def flex_recommendations_diabetes(recommendations):
     }
 
 
-def flex(key1):
+def flex(key1, diff1, avg1):
+    key_contents = [
+        {
+            "type": "text",
+            "text": forkey,
+            "size": "sm",
+            "color": "#555555",
+            "flex": 0
+        } for forkey in key1
+    ]
+
+    diff_contents = [
+        {
+            "type": "text",
+            "text": str(fordiff[0]),
+            "size": "sm",
+            "color": fordiff[1],  # ใช้ข้อมูลสี
+            "flex": 0,
+            "spacing": "md",
+            "spacing": "lg",
+            "wrap": True
+        } for fordiff in diff1
+    ]
+
+    avg_contents = [
+        {
+            "type": "text",
+            "text": foravg,
+            "size": "sm",
+            "color": "#555555",
+            "flex": 0,
+            "spacing": "lg",
+            "wrap": True
+        } for foravg in avg1
+    ]
+
     return {
         "type": "flex",
         "altText": "Flex Message",
@@ -253,13 +288,73 @@ def flex(key1):
                 "type": "box",
                 "layout": "vertical",
                 "contents": [
-                    {"type": "text", "text": "ผลลัพธ์การเปรียบเทียบ", "size": "lg", "weight": "bold"},
-                    {"type": "separator"},
-                ] + 
-                [{"type": "text", "text": f"{rec}aaa", "wrap": True} for rec in key1]
+                    {
+                        "type": "text",
+                        "text": "ผลการเปรียบเทียบ",
+                        "weight": "bold",
+                        "size": "xxl",
+                        "margin": "md"
+                    },
+                    {
+                        "type": "separator",
+                        "margin": "xxl"
+                    },
+                    {
+                        "type": "box",
+                        "layout": "horizontal",
+                        "margin": "xxl",
+                        "spacing": "sm",
+                        "contents": [
+                            {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": key_contents,
+                                "height": "100%",
+                                "width": "100px"
+                            },
+                            {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": diff_contents,
+                                "height": "100%",
+                                "width": "80px"
+                            },
+                            {
+                                "type": "box",
+                                "layout": "vertical",
+                                "contents": avg_contents,
+                                "height": "100%",
+                                "width": "80px"
+                            }
+                        ]
+                    }
+                ]
+            },
+            "styles": {
+                "footer": {
+                    "separator": True
+                }
             }
         }
     }
+    
+    
+    # {
+    #     "type": "flex",
+    #     "altText": "Flex Message",
+    #     "contents": {
+    #         "type": "bubble",
+    #         "body": {
+    #             "type": "box",
+    #             "layout": "vertical",
+    #             "contents": [
+    #                 {"type": "text", "text": "ผลลัพธ์การเปรียบเทียบ", "size": "lg", "weight": "bold"},
+    #                 {"type": "separator"},
+    #             ] + 
+    #             [{"type": "text", "text": f"{rec}aaa", "wrap": True} for rec in key1]
+    #         }
+    #     }
+    # }
 
 def flex2(image_url):
     return {

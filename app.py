@@ -273,10 +273,11 @@ def send_comparison_result():
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
-    comparison_result = []
+
     key1 = []
-    print(comparison_result)
-    print(type(comparison_result))
+    diff1 = []
+    avg1 = []
+# "#008000"
     print(key1)
     print(type(key1))
     for key in latest_avg.keys():
@@ -285,19 +286,21 @@ def send_comparison_result():
         if key in previous_avg:
             diff = latest_avg[key] - previous_avg[key]
             if diff > 0:
-                comparison_result.append(f"{diff} (จาก {previous_avg[key]} เป็น {latest_avg[key]})")
                 key1.append(key)
+                diff1.append((round(diff, 1), "#00FF00"))  # ใช้รหัสสีเขียว
+                avg1.append(f"({round(previous_avg[key], 1)}->{round(latest_avg[key], 1)})")
             elif diff < 0:
-                comparison_result.append(f"{key}: ลดลง {abs(diff)} (จาก {previous_avg[key]} เป็น {latest_avg[key]})")
                 key1.append(key)
+                diff1.append((round(diff, 1), "#FF0000"))  # ใช้รหัสสีแดง
+                avg1.append(f"({round(previous_avg[key], 1)}->{round(latest_avg[key], 1)})")
             else:
-                comparison_result.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
+                key1.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
 
     Flex_message = []
 
     if user:
         # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
-        predict = flex(key1)
+        predict = flex(key1, diff1, avg1)
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
