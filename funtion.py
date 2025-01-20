@@ -13,15 +13,15 @@ from matplotlib import font_manager as fm
 from datetime import datetime  # Import the datetime class
 
     # โหลดโมเดลที่ใช้ทำนายโรคสมอง
-with open(r"C:\Users\Acer\masaidee\Internship\project\model_stroke_risk.pkl", 'rb') as model_file:
+with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\model_stroke_risk.pkl", 'rb') as model_file:
     Staggers_classifier = pickle.load(model_file)
     
     # โหลดโมเดลที่ใช้ทำนายโรคเบาหวาน
-with open(r"C:\Users\Acer\masaidee\Internship\project\model_blood_fat.pkl", 'rb') as model_file:
+with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\model_blood_fat.pkl", 'rb') as model_file:
     Blood_fat_classifier = pickle.load(model_file)
 
     # โหลดโมเดลที่ใช้ทำนายโรคไขมันในเลือด
-with open(r"C:\Users\Acer\masaidee\Internship\project\model_dm_risk.pkl", 'rb') as model_file:
+with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\model_dm_risk.pkl", 'rb') as model_file:
     Diabetes_classifier = pickle.load(model_file)
 
 # การเชื่อมต่อ MongoDB 
@@ -98,26 +98,29 @@ def compare_and_visualize_diabetes_data():
     previous_avg = translate_keys(previous_avg, key_mapping)
 
     # เปรียบเทียบค่าเฉลี่ย
-    comparison_result = []
-    for key in latest_avg.keys():
-        if key in previous_avg:
-            diff = latest_avg[key] - previous_avg[key]
-            if diff > 0:
-                comparison_result.append(f"{key}: เพิ่มขึ้น {diff:.2f}")
-            elif diff < 0:
-                comparison_result.append(f"{key}: ลดลง {abs(diff):.2f}")
-            else:
-                comparison_result.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
+    # comparison_result = []
+    # for key in latest_avg.keys():
+    #     if key == "อายุ":
+    #         continue
+    #     if key in previous_avg:
+    #         diff = latest_avg[key] - previous_avg[key]
+    #         if diff > 0:
+    #             comparison_result.append(f"{key}: เพิ่มขึ้น {diff} (จาก {previous_avg[key]} เป็น {latest_avg[key]})")
+    #         elif diff < 0:
+    #             comparison_result.append(f"{key}: ลดลง {abs(diff)} (จาก {previous_avg[key]} เป็น {latest_avg[key]})")
+    #         else:
+    #             comparison_result.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
+                
 
 
     # ระบุเส้นทางไปยังไฟล์ฟอนต์ที่รองรับภาษาไทย
-    font_path = r'C:\Users\Acer\masaidee\Internship\from\THSarabun\THSarabun.ttf'  # แก้ไขเส้นทางไปยังฟอนต์ไทยที่คุณใช้งาน
+    font_path = r"D:\masaidee\Internship\from\THSarabun\THSarabun.ttf"  # แก้ไขเส้นทางไปยังฟอนต์ไทยที่คุณใช้งาน
 
     # โหลดฟอนต์ที่ระบุ
     prop = fm.FontProperties(fname=font_path)
 
     # สร้างกราฟ
-    labels = list(latest_avg.keys())
+    labels = [key for key in latest_avg.keys() if key != "อายุ"]
     latest_values = [latest_avg[key] for key in labels]
     previous_values = [previous_avg[key] for key in labels]
 
@@ -141,11 +144,11 @@ def compare_and_visualize_diabetes_data():
 
 
     print(formatted_time)
-    image_url = f"https://96a0-223-206-78-182.ngrok-free.app/{graph_path}"
+    image_url = f"https://d655-223-206-78-182.ngrok-free.app/{graph_path}"
 
 
     # send_comparison_result(user, comparison_result, image_url)
-    return user, comparison_result, image_url 
+    return user, latest_avg, previous_avg, image_url 
 
 
 

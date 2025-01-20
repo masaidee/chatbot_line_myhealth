@@ -1,4 +1,6 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect
+from pymongo import MongoClient
+from bson.objectid import ObjectId
 import json
 import requests
 import numpy as np
@@ -151,6 +153,8 @@ def send_diabetes():
     if family_his == 0:
         recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
 
+    print(type(recommendations))
+    print(f"a{recommendations}")
 
     Flex_message = []    
     
@@ -223,6 +227,8 @@ def send_blood_fat():
     if Ldl >= 100:
         recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
 
+    print(recommendations)
+
     Flex_message = []
 
     if user:
@@ -262,24 +268,41 @@ def send_blood_fat():
 
 
 def send_comparison_result():
-    user, comparison_result, image_url = compare_and_visualize_diabetes_data()
+    user, latest_avg, previous_avg, image_url = compare_and_visualize_diabetes_data()
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
-
-    comparison_text = "\n".join(comparison_result)
+    comparison_result = []
+    key1 = []
+    print(comparison_result)
+    print(type(comparison_result))
+    print(key1)
+    print(type(key1))
+    for key in latest_avg.keys():
+        if key == "อายุ":
+            continue
+        if key in previous_avg:
+            diff = latest_avg[key] - previous_avg[key]
+            if diff > 0:
+                comparison_result.append(f"{diff} (จาก {previous_avg[key]} เป็น {latest_avg[key]})")
+                key1.append(key)
+            elif diff < 0:
+                comparison_result.append(f"{key}: ลดลง {abs(diff)} (จาก {previous_avg[key]} เป็น {latest_avg[key]})")
+                key1.append(key)
+            else:
+                comparison_result.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
 
     Flex_message = []
 
     if user:
         # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
-        predict = flex2(comparison_text, image_url)
+        predict = flex(key1)
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
         # เพิ่มข้อความการวิเคราะห์ข้อมูล
-        analysis_data = flex(comparison_text, image_url)
+        analysis_data = flex2(image_url)
         if analysis_data:
             Flex_message.append(analysis_data)
 
@@ -296,9 +319,7 @@ def send_comparison_result():
     else:
         print(f"เกิดข้อผิดพลาดในการส่งข้อความa: {response.status_code}, {response.text}")
 
-from flask import Flask, render_template, request, redirect
-from pymongo import MongoClient
-from bson.objectid import ObjectId
+
 
 
 

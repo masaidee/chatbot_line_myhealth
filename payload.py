@@ -243,27 +243,25 @@ def flex_recommendations_diabetes(recommendations):
     }
 
 
-def flex(comparison_text, image_url):
+def flex(key1):
     return {
         "type": "flex",
-        "altText": "ผลการเปรียบเทียบ",
+        "altText": "Flex Message",
         "contents": {
             "type": "bubble",
             "body": {
                 "type": "box",
                 "layout": "vertical",
                 "contents": [
-                    {
-                        "type": "text",
-                        "text": comparison_text,
-                        "wrap": True
-                    }
-                ]
+                    {"type": "text", "text": "ผลลัพธ์การเปรียบเทียบ", "size": "lg", "weight": "bold"},
+                    {"type": "separator"},
+                ] + 
+                [{"type": "text", "text": f"{rec}aaa", "wrap": True} for rec in key1]
             }
         }
     }
 
-def flex2(comparison_text, image_url):
+def flex2(image_url):
     return {
         "type": "flex",
         "altText": "Flex Message",
