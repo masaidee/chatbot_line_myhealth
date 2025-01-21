@@ -103,7 +103,10 @@
             <button type="submit">Add Activity</button>
         </form>
     </div>
-
+    <script>
+        // เติม userId ลงในฟิลด์ฟอร์ม
+        document.getElementById('userId').value = "{{ userId }}";
+    </script>
     <!-- แสดงข้อมูลจากทั้ง 4 collection -->
     <div class="container data-section">
         <h2>User Profiles</h2>

@@ -21,11 +21,13 @@ from payload import (
     flex_analysis_data_diabetes,
     flex_recommendations_diabetes,
     compare,
-    compare_img
+    compare_img,
+    payloadinsertData
     )
 from funtion import (compare_and_visualize_diabetes_data,
                      Checkup_blood_fat,
-                     Checkup_diabetes
+                     Checkup_diabetes,
+                    insertData
                      )
 
 
@@ -92,7 +94,7 @@ def generating_answer(question_from_dailogflow_raw):
 
     # ตรวจสอบค่า intent_name เพื่อเรียกใช้ฟังก์ชันที่ต้องการ 
     if intent_name == 'insertData': #เพิ่มข้อมูล
-        answer_str = () 
+        answer_str = send_insertData() 
 
     elif intent_name == 'compare': #เปรียบเทียบข้อมูล
         answer_str = send_comparison_result()
@@ -323,6 +325,38 @@ def send_comparison_result():
         print(f"เกิดข้อผิดพลาดในการส่งข้อความa: {response.status_code}, {response.text}")
 
 
+def send_insertData():
+    # URL_ngrok = "https://0fb1-223-206-78-182.ngrok-free.app"
+    user, URL_ngrok = insertData()
+    print("User:", user)
+    print("URL:", URL_ngrok)
+
+    headers = {
+        "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    Flex_message = []
+    
+    if user:
+
+        predict = payloadinsertData(URL_ngrok)
+        if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
+            Flex_message.append(predict)
+
+    payload = {
+        "to": user,
+        "messages": Flex_message
+    }
+
+
+    response = requests.post(LINE_API_URL, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        print("ส่งข้อความสำเร็จ")
+    else:
+        print(f"เกิดข้อผิดพลาดในการส่งข้อความa: {response.status_code}, {response.text}")
+
 
 
 
@@ -332,7 +366,6 @@ def send_comparison_result():
 # Route สำหรับหน้าแรก
 @app.route('/')
 def index():
-    # ดึงข้อมูลจากทั้ง 4 collection
     users = user_profiles.find()
     tests = Diabetes_collection.find()
     foods = food_recommendations.find()

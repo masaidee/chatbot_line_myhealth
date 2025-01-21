@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template, redirect
 import json
 import requests
 import numpy as np
@@ -11,6 +11,10 @@ from scipy.stats import linregress
 from flask_cors import CORS
 from matplotlib import font_manager as fm
 from datetime import datetime  # Import the datetime class
+
+app = Flask(__name__)
+CORS(app)
+
 
     # โหลดโมเดลที่ใช้ทำนายโรคสมอง
 with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\model_stroke_risk.pkl", 'rb') as model_file:
@@ -32,6 +36,11 @@ Staggers_collection = db["Staggers"]       # สำหรับเก็บข�
 Diabetes_collection = db["Diabetes"]       # สำหรับเก็บข้อมูลโรคไขมันในเลือด
 blood_fat_collection = db["blood-fat"]       # สำหรับเก็บข้อมูลโรคไขมันในเลือด
 Disease_collection = db["Disease-status"]       # สำหรับเก็บข้อมูลความมเสี่ยง
+# กำหนด collection ทั้ง 4
+user_profiles = db['user_profiles']
+diabetes_tests = db['diabetes_tests']
+food_recommendations = db['food_recommendations']
+daily_activities = db['daily_activities']
 
 LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 #myhealth
@@ -40,6 +49,8 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
 
 
+ngrok = "https://0fb1-223-206-78-182.ngrok-free.app"
+#การเปรียบเทียบ
 def calculate_average(data_list):
     averages = {}
     count = len(data_list)
@@ -62,6 +73,7 @@ def translate_keys(data, key_mapping):
         translated_key = key_mapping.get(key, key)
         translated_data[translated_key] = value
     return translated_data
+
 def compare_and_visualize_diabetes_data():
     req = request.get_json(silent=True, force=True)
     user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
@@ -97,21 +109,6 @@ def compare_and_visualize_diabetes_data():
     latest_avg = translate_keys(latest_avg, key_mapping)
     previous_avg = translate_keys(previous_avg, key_mapping)
 
-    # เปรียบเทียบค่าเฉลี่ย
-    # comparison_result = []
-    # for key in latest_avg.keys():
-    #     if key == "อายุ":
-    #         continue
-    #     if key in previous_avg:
-    #         diff = latest_avg[key] - previous_avg[key]
-    #         if diff > 0:
-    #             comparison_result.append(f"{key}: เพิ่มขึ้น {diff} (จาก {previous_avg[key]} เป็น {latest_avg[key]})")
-    #         elif diff < 0:
-    #             comparison_result.append(f"{key}: ลดลง {abs(diff)} (จาก {previous_avg[key]} เป็น {latest_avg[key]})")
-    #         else:
-    #             comparison_result.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
-                
-
 
     # ระบุเส้นทางไปยังไฟล์ฟอนต์ที่รองรับภาษาไทย
     font_path = r"D:\masaidee\Internship\from\THSarabun\THSarabun.ttf"  # แก้ไขเส้นทางไปยังฟอนต์ไทยที่คุณใช้งาน
@@ -142,14 +139,13 @@ def compare_and_visualize_diabetes_data():
     plt.savefig(graph_path)
     plt.close()
 
-    ngrok = "https://caee-223-206-78-182.ngrok-free.app/"
+
     print(formatted_time)
     image_url = f"{ngrok}/{graph_path}"
 
 
     # send_comparison_result(user, comparison_result, image_url)
     return user, latest_avg, previous_avg, image_url 
-
 
 
 #เช็คโรคไขมันในเลือด
@@ -251,4 +247,10 @@ def Checkup_diabetes():
 
     return user, reply_text, age, bmi, visceral, wc, ht, ht_str, sbp, dbp, fbs, HbAlc, family_his, family_his_str
    
-   
+def insertData():
+    req = request.get_json(silent=True, force=True)
+    user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+    URL_ngrok = f"{ngrok}"
+
+
+    return user, URL_ngrok

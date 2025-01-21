@@ -1,0 +1,169 @@
+{
+  "type": "carousel",
+  "contents": [
+    {
+      "type": "bubble",
+      "hero": {
+        "type": "image",
+        "url": "https://tse3.mm.bing.net/th?id=OIP.yyb_fEnU90jvsagWV0iy1gHaHa&pid=Api&P=0&h=180",
+        "size": "full",
+        "aspectRatio": "20:13",
+        "aspectMode": "cover"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "ข้อมูลส่วนตัว",
+            "weight": "bold",
+            "size": "xl",
+            "contents": []
+          }
+        ],
+        "alignItems": "center"
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "uri",
+              "uri": "https://linecorp.com",
+              "label": "เพิ่มข้อมูล"
+            },
+            "style": "primary"
+          }
+        ]
+      }
+    },
+    {
+      "type": "bubble",
+      "hero": {
+        "type": "image",
+        "url": "https://tse2.mm.bing.net/th?id=OIP.iQkrJy3wolMxKYESs4UO-gHaDq&pid=Api&P=0&h=180",
+        "size": "full",
+        "aspectRatio": "20:13",
+        "aspectMode": "cover"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "โรคเบาหวาน",
+            "weight": "bold",
+            "size": "xl",
+            "contents": []
+          }
+        ],
+        "alignItems": "center"
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "uri",
+              "uri": "https://linecorp.com",
+              "label": "เพิ่มข้อมูล"
+            },
+            "style": "primary"
+          }
+        ]
+      }
+    },
+    {
+      "type": "bubble",
+      "hero": {
+        "type": "image",
+        "url": "https://tse4.mm.bing.net/th?id=OIP.PW8FqeDmyXK1qpGgv-sLUgHaEK&pid=Api&P=0&h=180",
+        "size": "full",
+        "aspectRatio": "20:13",
+        "aspectMode": "cover"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "โรคไขมันในเลือด",
+            "weight": "bold",
+            "size": "xl",
+            "contents": []
+          }
+        ],
+        "alignItems": "center"
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "uri",
+              "uri": "https://linecorp.com",
+              "label": "เพิ่มข้อมูล"
+            },
+            "style": "primary"
+          }
+        ]
+      }
+    },
+    {
+      "type": "bubble",
+      "hero": {
+        "type": "image",
+        "url": "https://tse3.mm.bing.net/th?id=OIP.mYZOsolcq794sn847AQjlAHaHa&pid=Api&P=0&h=180",
+        "size": "full",
+        "aspectRatio": "20:13",
+        "aspectMode": "cover"
+      },
+      "body": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "text",
+            "text": "โรคสมอง",
+            "weight": "bold",
+            "size": "xl",
+            "contents": []
+          }
+        ],
+        "alignItems": "center"
+      },
+      "footer": {
+        "type": "box",
+        "layout": "vertical",
+        "spacing": "sm",
+        "contents": [
+          {
+            "type": "button",
+            "action": {
+              "type": "uri",
+              "label": "action",
+              "uri": "http://linecorp.com/"
+            },
+            "style": "primary"
+          }
+        ]
+      }
+    }
+  ]
+}
