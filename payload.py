@@ -1,3 +1,4 @@
+#เช็คโรคไขมันในเลือด
 def flex_predict_blood_fat(reply_text, reply_text_color):
     return {
         "type": "flex",
@@ -33,10 +34,6 @@ def flex_predict_blood_fat(reply_text, reply_text_color):
             }
         }
     }
-
-    
-
-
 
 def flex_analysis_data_blood_fat(Gender_status, Weight, Height, Cholesterol, Triglycerides, Hdl, Ldl, colors):
     return {
@@ -79,89 +76,8 @@ def flex_recommendations_blood_fat(recommendations):
         }
     }
 
-def generate_payload(user, reply_text, reply_text_color, Gender_status, Weight, Height, 
-                     Cholesterol, Cholesterol_color, Triglycerides, Triglycerides_color, 
-                     Hdl, Hdl_color, Ldl, Ldl_color, recommendations):
-    return {
-        "to": user,
-        "messages": [
-            {
-                "type": "flex",
-                "altText": "ข้อ",
-                "contents": {
-                    "type": "bubble",
-                    "body": {
-                        "type": "box",
-                        "layout": "vertical",
-                        "contents": [
-                            {"type": "text", "text": "ความเสี่ยงโรคไขมันในเลือด", "size": "lg"},
-                            {"type": "text", "text": f"  {reply_text}", "size": "xl", "color": f"{reply_text_color}"}
-                        ]
-                    }
-                }
-            },
-            {
-                "type": "flex",
-                "altText": "Flex Message",
-                "contents": {
-                    "type": "bubble",
-                    "body": {
-                        "type": "box",
-                        "layout": "vertical",
-                        "spacing": "md",
-                        "contents": [
-                            {"type": "text", "text": "ข้อมูลการวิเคราะห์", "size": "lg", "weight": "bold"},
-                            {"type": "separator"},
-                            {"type": "box", "layout": "horizontal", "spacing": "md", "contents": [
-                                {"type": "text", "text": "เพศ:"},
-                                {"type": "text", "text": f"{Gender_status}"}
-                            ]},
-                            {"type": "box", "layout": "horizontal", "spacing": "md", "contents": [
-                                {"type": "text", "text": "น้ำหนัก:"},
-                                {"type": "text", "text": f"{Weight}"}
-                            ]},
-                            {"type": "box", "layout": "horizontal", "spacing": "md", "contents": [
-                                {"type": "text", "text": "ส่วนสูง"},
-                                {"type": "text", "text": f"{Height}"}
-                            ]},
-                            {"type": "box", "layout": "horizontal", "spacing": "md", "contents": [
-                                {"type": "text", "text": "คอเลสเตอรอล:"},
-                                {"type": "text", "text": f"{Cholesterol}", "color": f"{Cholesterol_color}"}
-                            ]},
-                            {"type": "box", "layout": "horizontal", "spacing": "md", "contents": [
-                                {"type": "text", "text": "ไตรกลเซอไรด์:"},
-                                {"type": "text", "text": f"{Triglycerides}", "color": f"{Triglycerides_color}"}
-                            ]},
-                            {"type": "box", "layout": "horizontal", "spacing": "md", "contents": [
-                                {"type": "text", "text": "ความดันตัวบน:"},
-                                {"type": "text", "text": f"{Hdl}", "color": f"{Hdl_color}"}
-                            ]},
-                            {"type": "box", "layout": "horizontal", "spacing": "md", "contents": [
-                                {"type": "text", "text": "ความดันตัวล่าง:"},
-                                {"type": "text", "text": f"{Ldl}", "color": f"{Ldl_color}"}
-                            ]}
-                        ]
-                    }
-                }
-            },
-            {
-                "type": "flex",
-                "altText": "Flex Message",
-                "contents": {
-                    "type": "bubble",
-                    "body": {
-                        "type": "box",
-                        "layout": "vertical",
-                        "contents": [
-                            {"type": "text", "text": "คำแนะนำ", "size": "lg", "weight": "bold"},
-                            {"type": "separator", "margin": "md"}
-                        ] + [{"type": "text", "text": rec, "wrap": True} for rec in recommendations]
-                    }
-                }
-            }
-        ]
-    }
 
+#เช็คโรคเบาหวาน
 def flex_predict_diabetes(reply_text, reply_text_color):
     return {
         "type": "flex",
@@ -243,7 +159,8 @@ def flex_recommendations_diabetes(recommendations):
     }
 
 
-def flex(key1, diff1, avg1):
+#เปรียบเทียบข้อมูล
+def compare(key1, diff1, avg1):
     key_contents = [
         {
             "type": "text",
@@ -261,8 +178,6 @@ def flex(key1, diff1, avg1):
             "size": "sm",
             "color": fordiff[1],  # ใช้ข้อมูลสี
             "flex": 0,
-            "spacing": "md",
-            "spacing": "lg",
             "wrap": True
         } for fordiff in diff1
     ]
@@ -274,7 +189,6 @@ def flex(key1, diff1, avg1):
             "size": "sm",
             "color": "#555555",
             "flex": 0,
-            "spacing": "lg",
             "wrap": True
         } for foravg in avg1
     ]
@@ -292,17 +206,17 @@ def flex(key1, diff1, avg1):
                         "type": "text",
                         "text": "ผลการเปรียบเทียบ",
                         "weight": "bold",
-                        "size": "xxl",
+                        "size": "lg",
                         "margin": "md"
                     },
                     {
                         "type": "separator",
-                        "margin": "xxl"
+                        "margin": "lg"
                     },
                     {
                         "type": "box",
                         "layout": "horizontal",
-                        "margin": "xxl",
+                        "margin": "sm",
                         "spacing": "sm",
                         "contents": [
                             {
@@ -317,14 +231,17 @@ def flex(key1, diff1, avg1):
                                 "layout": "vertical",
                                 "contents": diff_contents,
                                 "height": "100%",
-                                "width": "80px"
+                                "width": "50px",
+                                "spacing": "sm"
                             },
                             {
                                 "type": "box",
                                 "layout": "vertical",
                                 "contents": avg_contents,
                                 "height": "100%",
-                                "width": "80px"
+                                "width": "100%",
+                                "spacing": "sm"
+
                             }
                         ]
                     }
@@ -356,7 +273,7 @@ def flex(key1, diff1, avg1):
     #     }
     # }
 
-def flex2(image_url):
+def compare_img(image_url):
     return {
         "type": "flex",
         "altText": "Flex Message",
@@ -377,6 +294,7 @@ def flex2(image_url):
             }
         }
     }
+
 
 
 

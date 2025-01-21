@@ -20,8 +20,8 @@ from payload import (
     flex_predict_diabetes,
     flex_analysis_data_diabetes,
     flex_recommendations_diabetes,
-    flex,
-    flex2
+    compare,
+    compare_img
     )
 from funtion import (compare_and_visualize_diabetes_data,
                      Checkup_blood_fat,
@@ -91,10 +91,10 @@ def generating_answer(question_from_dailogflow_raw):
     intent_name = question_from_dailogflow_dict.get("intent", {}).get("displayName", "")
 
     # ตรวจสอบค่า intent_name เพื่อเรียกใช้ฟังก์ชันที่ต้องการ 
-    if intent_name == 'view_user_profile':#กรอกข้อมูลโรคสมอง ลงใน monggodb ทำนายโรคสมอง
+    if intent_name == 'insertData': #เพิ่มข้อมูล
         answer_str = () 
 
-    elif intent_name == 'compare':#กรอกข้อมูลโรคไขมันในเลือด ลงใน monggodb ทำนายโรคไขมันในเลือด
+    elif intent_name == 'compare': #เปรียบเทียบข้อมูล
         answer_str = send_comparison_result()
 
     elif intent_name == 'Checkup_blood-fat':  # ตรวจโรคไขมันในเลือดโดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
@@ -288,24 +288,24 @@ def send_comparison_result():
             if diff > 0:
                 key1.append(key)
                 diff1.append((round(diff, 1), "#00FF00"))  # ใช้รหัสสีเขียว
-                avg1.append(f"({round(previous_avg[key], 1)}->{round(latest_avg[key], 1)})")
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
             elif diff < 0:
                 key1.append(key)
                 diff1.append((round(diff, 1), "#FF0000"))  # ใช้รหัสสีแดง
-                avg1.append(f"({round(previous_avg[key], 1)}->{round(latest_avg[key], 1)})")
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
             else:
                 key1.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
 
     Flex_message = []
-
+    
     if user:
         # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
-        predict = flex(key1, diff1, avg1)
+        predict = compare_img(image_url)
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
         # เพิ่มข้อความการวิเคราะห์ข้อมูล
-        analysis_data = flex2(image_url)
+        analysis_data = compare(key1, diff1, avg1)
         if analysis_data:
             Flex_message.append(analysis_data)
 

@@ -142,9 +142,9 @@ def compare_and_visualize_diabetes_data():
     plt.savefig(graph_path)
     plt.close()
 
-
+    ngrok = "https://caee-223-206-78-182.ngrok-free.app/"
     print(formatted_time)
-    image_url = f"https://4224-223-206-78-182.ngrok-free.app/{graph_path}"
+    image_url = f"{ngrok}/{graph_path}"
 
 
     # send_comparison_result(user, comparison_result, image_url)
@@ -252,81 +252,3 @@ def Checkup_diabetes():
     return user, reply_text, age, bmi, visceral, wc, ht, ht_str, sbp, dbp, fbs, HbAlc, family_his, family_his_str
    
    
-    if intent == "Blood fat - custom":     # ตรวจสอบ intent เฉพาะ "Blood fat - custom"
-        Gender = parameters.get("gender_str", 0)
-        Weight = parameters.get("Weight", 0)
-        Height = parameters.get("Height", 0)
-        Cholesterol = parameters.get("Cholesterol", 0)
-        Triglycerides = parameters.get("Triglycerides", 0)
-        Hdl = parameters.get("Hdl", 0)
-        Ldl = parameters.get("Ldl", 0)
-        # บันทึกข้อมูลลง MongoDB
-        blood_fat_collection.insert_one({
-            "userId": user_id,
-            "intent": intent,
-            "Gender": Gender,
-            "Weight": Weight,
-            "Height": Height,
-            "Cholesterol": Cholesterol,
-            "Triglycerides": Triglycerides,
-            "Hdl": Hdl,
-            "Ldl": Ldl,
-            "timestamp": timestamp
-        })
-    elif intent == "Diabetes - custom":    # ตรวจสอบ intent เฉพาะ "Diabetes - custom"
-        age = int(parameters.get("age", 0))
-        bmi = float(parameters.get("bmi", 0))
-        visceral = float(parameters.get("visceral", 0))
-        wc = (parameters.get("wc", 0))
-        ht = int(parameters.get("ht", 0))
-        sbp = float(parameters.get("sbp", 0))  # แก้ไขชื่อให้ถูกต้อง
-        dbp = float(parameters.get("dbp", 0))
-        fbs = float(parameters.get("fbs", 0))
-        HbAlc = float(parameters.get("HbAlc", 0))
-        family_his = int(parameters.get("family_his", 0))
-        # บันทึกข้อมูลลง MongoDB
-        Diabetes_collection.insert_one({
-            "userId": user_id,
-            "intent": intent,
-            "age": age,
-            "bmi": bmi,
-            "visceral": visceral,
-            "wc": wc,
-            "ht": ht,
-            "sbp": sbp,
-            "dbp": dbp,
-            "fbs": fbs,
-            "HbAlc": HbAlc,
-            "family_his": family_his,
-            "timestamp": timestamp
-        })   
-    elif intent == "Staggers - custom":    # ตรวจสอบ intent เฉพาะ "Staggers - custom"
-        sbp = float(parameters.get("sbp", 0))
-        dbp = float(parameters.get("dbp", 0))
-        his = int(parameters.get("his", 0))
-        smoke = int(parameters.get("smoke", 0))
-        fbs = float(parameters.get("fbs", 0))
-        HbAlc = float(parameters.get("HbAlc", 0))  # แก้ไขชื่อให้ถูกต้อง
-        cholesterol = float(parameters.get("cholesterol", 0))
-        exs = int(parameters.get("exs", 0))
-        bmi = float(parameters.get("bmi", 0))
-        family_his = int(parameters.get("family_his", 0))
-        # บันทึกข้อมูลลง MongoDB
-        Staggers_collection.insert_one({
-            "userId": user_id,
-            "intent": intent,
-            "sbp": sbp,
-            "dbp": dbp,
-            "his": his,
-            "smoke": smoke,
-            "fbs": fbs,
-            "HbAlc": HbAlc,
-            "cholesterol": cholesterol,
-            "exs": exs,
-            "bmi": bmi,
-            "family_his": family_his,
-            "timestamp": timestamp
-        })   
-    else:
-        print(f"โรค: {intent} ไม่ถูกเก็บเก็บข้อมูล monggodb")  # ถ้า intent ไม่ตรง จะไม่ทำอะไร 
-
