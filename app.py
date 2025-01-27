@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, render_template, redirect
+from flask import Flask, request, jsonify, render_template, redirect, send_from_directory, session
 from pymongo import MongoClient
 from bson.objectid import ObjectId
 import json
@@ -27,7 +27,8 @@ from payload import (
 from funtion import (compare_and_visualize_diabetes_data,
                      Checkup_blood_fat,
                      Checkup_diabetes,
-                    insertData
+                    insertData,
+                    getUser
                      )
 
 
@@ -65,10 +66,11 @@ def serialize_user(user):
     return user
 
 
-@app.route('/webhook1', methods=['GET'])
-def home():
-    return "Hello, Flask!"
-# # 1. อ่านข้อมูลทั้งหมด (GET)
+# @app.route('/webhook1', methods=['POST'])
+# def home():
+    # return "Hello, Flask!"
+
+# 1. อ่านข้อมูลทั้งหมด (GET)
 # @app.route("/api/users", methods=["GET"])
 # def get_users():
 #     users = list(users_collection.find())
@@ -279,7 +281,6 @@ def send_comparison_result():
     key1 = []
     diff1 = []
     avg1 = []
-# "#008000"
     print(key1)
     print(type(key1))
     for key in latest_avg.keys():
@@ -326,10 +327,8 @@ def send_comparison_result():
 
 
 def send_insertData():
-    # URL_ngrok = "https://0fb1-223-206-78-182.ngrok-free.app"
-    user, URL_ngrok = insertData()
+    user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form = insertData()
     print("User:", user)
-    print("URL:", URL_ngrok)
 
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
@@ -340,7 +339,7 @@ def send_insertData():
     
     if user:
 
-        predict = payloadinsertData(URL_ngrok)
+        predict = payloadinsertData(URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form)
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
@@ -359,18 +358,18 @@ def send_insertData():
 
 
 
-
-
-
-
-# Route สำหรับหน้าแรก
-@app.route('/')
+# สร้างเส้นทางสำหรับเรียกใช้งาน
+@app.route('/add_user_form')
 def index():
-    users = user_profiles.find()
-    tests = Diabetes_collection.find()
-    foods = food_recommendations.find()
-    activities = daily_activities.find()
-    return render_template('index.html', users=users, tests=tests, foods=foods, activities=activities)
+    return render_template('add_user_form.html')
+
+@app.route('/add_diabetes_form')
+def index1():
+    return render_template('add_diabetes_form.html')
+
+@app.route('/add_blood_fat_form')
+def index2():
+    return render_template('add_blood_fat_form.html')
 
 # Route สำหรับเพิ่มข้อมูลใน user_profiles
 @app.route('/add_user', methods=['POST'])
@@ -382,13 +381,13 @@ def add_user():
     height = request.form['height']
     weight = request.form['weight']
     timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
-    user = {'userId': userId, 'name': name, 'age': age, 'gender': gender, 'height': height, 'weight': weight, 'timestamp': timestamp}
-    user_profiles.insert_one(user)
-    return redirect('/')
+    user1 = {'userId': userId, 'name': name, 'age': age, 'gender': gender, 'height': height, 'weight': weight, 'timestamp': timestamp}
+    user_profiles.insert_one(user1)
+    return redirect('/add_user_form')
 
-# Route สำหรับเพิ่มข้อมูลใน diabetes_tests
-@app.route('/add_test', methods=['POST'])
-def add_test():
+# Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
+@app.route('/add_Diabetes', methods=['POST'])
+def add_Diabetes():
     userId = request.form['userId']
     age = request.form['age']
     bmi = request.form['bmi']
@@ -400,10 +399,38 @@ def add_test():
     fbs = request.form['fbs']
     HbAlc = request.form['HbAlc']
     family_his = request.form['family_his']
+
+    try:
+        age = float(age)
+        bmi = float(bmi)
+        visceral = float(visceral)
+        wc = float(wc)
+        ht = float(ht)
+        sbp = float(sbp)
+        dbp = float(dbp)
+        fbs = float(fbs)
+        HbAlc = float(HbAlc)
+        family_his = int(family_his)
+    except ValueError:
+        return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
+
     timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
-    test = {'userId': userId, 'age': age, 'bmi': bmi, 'visceral': visceral, 'wc': wc, 'ht': ht, 'sbp': sbp, 'dbp': dbp, 'fbs': fbs, 'HbAlc': HbAlc, 'family_his': family_his, 'timestamp': timestamp}
+    test = {
+        'userId': userId,
+        'age': age,
+        'bmi': bmi,
+        'visceral': visceral,
+        'wc': wc,
+        'ht': ht,
+        'sbp': sbp,
+        'dbp': dbp,
+        'fbs': fbs,
+        'HbAlc': HbAlc,
+        'family_his': family_his,
+        'timestamp': timestamp
+    }
     Diabetes_collection.insert_one(test)
-    return redirect('/')
+    return redirect('/add_diabetes_form')
 
 # Route สำหรับเพิ่มข้อมูลใน food_recommendations
 @app.route('/add_food', methods=['POST'])

@@ -49,7 +49,7 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
 
 
-ngrok = "https://0fb1-223-206-78-182.ngrok-free.app"
+ngrok = "https://6358-223-206-78-182.ngrok-free.app"
 #การเปรียบเทียบ
 def calculate_average(data_list):
     averages = {}
@@ -82,7 +82,8 @@ def compare_and_visualize_diabetes_data():
     latest_data = Diabetes_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
     previous_data = list(Diabetes_collection.find({"userId": user}))  # ข้อมูลก่อนหน้า (หลายชุด)
 
-    print(f"ข้อมูล{latest_data}")
+    print(f"ข้อมูลล่าสุด{latest_data}")
+    print(f"ข้อมูลเก่า{previous_data}")
 
     if not latest_data or len(previous_data) == 0:
         return "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ", None
@@ -247,10 +248,26 @@ def Checkup_diabetes():
 
     return user, reply_text, age, bmi, visceral, wc, ht, ht_str, sbp, dbp, fbs, HbAlc, family_his, family_his_str
    
+#เพิ่มข้อมูล
 def insertData():
     req = request.get_json(silent=True, force=True)
     user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
-    URL_ngrok = f"{ngrok}"
+    URL_add_user_form = f"{ngrok}/add_user_form"
+    URL_add_diabetes_form = f"{ngrok}/add_diabetes_form"
+    URL_add_blood_fat_form = f"{ngrok}/add_blood-fat_form"
+    return user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form
 
-
-    return user, URL_ngrok
+#ดึงข้อมูลผู้ใช้
+def getUser():
+    req = request.get_json(silent=True, force=True)
+    user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+    user_data = user_profiles.find_one({"userId": user})
+    print("User data:", user_data)
+    if not user_data:
+        return "ไม่พบข้อมูลผู้ใช้ในระบบ"
+        # แปลง ObjectId เป็นสตริง
+    user_data['_id'] = str(user_data['_id'])
+    name = user_data.get("name", "")
+    age = user_data.get("age", "")
+    a = f"ชื่อ: {name} อายุ: {age}"
+    return a

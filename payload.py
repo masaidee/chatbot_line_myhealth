@@ -295,7 +295,7 @@ def compare_img(image_url):
         }
     }
 
-def payloadinsertData(URL_ngrok):
+def payloadinsertData(URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form ):
     return {
   "type": "flex",
   "altText": "Flex Message",
@@ -335,7 +335,7 @@ def payloadinsertData(URL_ngrok):
               "type": "button",
               "action": {
                 "type": "uri",
-                "uri": URL_ngrok,
+                "uri": URL_add_user_form,
                 "label": "เพิ่มข้อมูล"
               },
               "style": "primary"
@@ -376,7 +376,7 @@ def payloadinsertData(URL_ngrok):
               "type": "button",
               "action": {
                 "type": "uri",
-                "uri": "https://linecorp.com",
+                "uri": URL_add_diabetes_form,
                 "label": "เพิ่มข้อมูล"
               },
               "style": "primary"
@@ -417,7 +417,7 @@ def payloadinsertData(URL_ngrok):
               "type": "button",
               "action": {
                 "type": "uri",
-                "uri": "https://linecorp.com",
+                "uri": URL_add_blood_fat_form,
                 "label": "เพิ่มข้อมูล"
               },
               "style": "primary"
