@@ -49,7 +49,8 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
 
 
-ngrok = "https://6358-223-206-78-182.ngrok-free.app"
+ngrok = "https://3873-223-206-78-223.ngrok-free.app"
+
 #การเปรียบเทียบ
 def calculate_average(data_list):
     averages = {}
@@ -227,9 +228,9 @@ def Checkup_diabetes():
 
     prediction = Diabetes_classifier.predict(input_data)
 
-    if prediction[0] == 1:
+    if prediction[0] == 0:
         reply_text = "ความเสี่ยงต่ำ"
-    elif prediction[0] == 2:
+    elif prediction[0] == 1:
         reply_text = "ความเสี่ยงปานกลาง"
     else:
         reply_text = "ความเสี่ยงสูง"
@@ -248,14 +249,79 @@ def Checkup_diabetes():
 
     return user, reply_text, age, bmi, visceral, wc, ht, ht_str, sbp, dbp, fbs, HbAlc, family_his, family_his_str
    
+
+
+#เช็คโรคสมอง
+def Checkup_Staggers():
+    req = request.get_json(silent=True, force=True)
+    intent = req['queryResult']['intent']['displayName']
+    user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+    print("Intent:", intent)
+    print("User:", user)
+    
+    # ดึงข้อมูลจาก MongoDB ตาม user_id
+    user_data_diabetes = Staggers_collection.find_one({"userId": user}, sort=[("timestamp", -1)])
+    print("User data:", user_data_diabetes)
+    
+    # ตรวจสอบว่าพบข้อมูลหรือไม่
+    if not user_data_diabetes:
+        return "ไม่พบข้อมูลผู้ใช้ในระบบ"
+
+    sbp = user_data_diabetes.get("sbp", 0)
+    dbp = user_data_diabetes.get("dbp", 0)
+    his = user_data_diabetes.get("his", 0)
+    smoke = user_data_diabetes.get("smoke", 0)
+    fbs = user_data_diabetes.get("fbs", 0)
+    HbAlc = user_data_diabetes.get("HbAlc", 0)
+    total_Cholesterol = user_data_diabetes.get("total_Cholesterol", 0)
+    Exe = user_data_diabetes.get("Exe", 0)
+    bmi = user_data_diabetes.get("bmi", 0)
+    family_his = user_data_diabetes.get("family_his", 0)
+
+    
+
+    input_data = [[sbp, dbp, his, smoke, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his]]
+    print("Input data:", input_data)
+
+    prediction = Diabetes_classifier.predict(input_data)
+
+    if prediction[0] == 0:
+        reply_text = "ความเสี่ยงต่ำ"
+    elif prediction[0] == 1:
+        reply_text = "ความเสี่ยงปานกลาง"
+    else:
+        reply_text = "ความเสี่ยงสูง"
+
+
+            
+    if his == 1:
+        his_str = "มีประวัติ"
+    else:
+        his_str = "ไม่มีประวัติ"
+
+    if smoke == 0:
+        smoke_str = "ไม่เคบสูบ"
+    elif smoke == 1:
+        smoke_str = "หยุดสูบแล้ว"
+    else:
+        smoke_str = "สูบอยู่"
+
+    if family_his == 1:
+        family_his_str = "มีประวัติ"
+    else:
+        family_his_str = "ไม่มีประวัติ"
+
+    return user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his, family_his_str
+
 #เพิ่มข้อมูล
 def insertData():
     req = request.get_json(silent=True, force=True)
     user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
     URL_add_user_form = f"{ngrok}/add_user_form"
     URL_add_diabetes_form = f"{ngrok}/add_diabetes_form"
-    URL_add_blood_fat_form = f"{ngrok}/add_blood-fat_form"
-    return user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form
+    URL_add_blood_fat_form = f"{ngrok}/add_blood_fat_form"
+    URL_add_staggers_form = f"{ngrok}/add_staggers_form"
+    return user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form, URL_add_staggers_form
 
 #ดึงข้อมูลผู้ใช้
 def getUser():

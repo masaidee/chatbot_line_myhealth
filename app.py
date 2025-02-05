@@ -17,9 +17,15 @@ from payload import (
     flex_predict_blood_fat,
     flex_analysis_data_blood_fat,
     flex_recommendations_blood_fat,
+
     flex_predict_diabetes,
     flex_analysis_data_diabetes,
     flex_recommendations_diabetes,
+
+    flex_predict_Staggers,
+    flex_analysis_data_Staggers,
+    flex_recommendations_Staggers,
+
     compare,
     compare_img,
     payloadinsertData
@@ -27,8 +33,9 @@ from payload import (
 from funtion import (compare_and_visualize_diabetes_data,
                      Checkup_blood_fat,
                      Checkup_diabetes,
-                    insertData,
-                    getUser
+                     Checkup_Staggers,
+                     insertData,
+                     getUser
                      )
 
 
@@ -101,10 +108,14 @@ def generating_answer(question_from_dailogflow_raw):
     elif intent_name == 'compare': #เปรียบเทียบข้อมูล
         answer_str = send_comparison_result()
 
-    elif intent_name == 'Checkup_blood-fat':  # ตรวจโรคไขมันในเลือดโดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
+    elif intent_name == 'getUser': #เปรียบเทียบข้อมูล
+        answer_str = getUser()
+    elif intent_name == 'Check - Blood_fat':  # ตรวจโรคไขมันในเลือดโดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
         answer_str = send_blood_fat()
-    elif intent_name == 'Checkup_diabetes':  # ตรวจโรคเบาหวาน โดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
+    elif intent_name == 'Check - Diabetes':  # ตรวจโรคเบาหวาน โดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
         answer_str = send_diabetes()
+    elif intent_name == 'Check - Staggers':  # ตรวจโรคสมอง โดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
+        answer_str = send_Staggers()
     else:
         answer_str = "คุณต้องการแบบไหน"
     return answer_str
@@ -199,6 +210,93 @@ def send_diabetes():
     else:
         print("ไม่มีข้อความที่ต้องส่ง")
 
+
+
+def send_Staggers():
+    user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his, family_his_str = Checkup_Staggers()
+    headers = {
+        "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    if reply_text == "ความเสี่ยงต่ำ":
+        reply_text_color = "#008000"  # สีเขียว
+    elif reply_text == "ความเสี่ยงปานกลาง":
+        reply_text_color = "#FFD700"  # ฟอนต์สีเหลืองทอง
+    else:
+        reply_text_color = "#FF0000"  # สีแดงถ้า 
+
+    colors = {
+        "sbp": "#008000" if sbp <= 120 else "#FF0000",
+        "dbp": "#008000" if dbp <= 80 else "#FF0000",
+        "his": "#008000" if his == 0 else "#FF0000",
+        "smoke": "#008000" if smoke == 0 else "#FF0000",
+        "fbs": "#008000" if fbs <= 80 else "#FF0000",
+        "HbAlc": "#008000" if HbAlc < 5.6 else "#FF0000",
+        "total_Cholesterol": "#008000" if total_Cholesterol < 200 else "#FF0000",
+        "Exe": "#008000" if Exe == 1 else "#FF0000",
+        "bmi": "#008000" if bmi < 24.9 else "#FF0000",
+        "family_his": "#008000" if family_his == 0 else "#FF0000"
+    }
+
+    # สร้างรายการคำแนะนำเพิ่มเติม
+    recommendations = []
+    if bmi > 24.9:
+        recommendations.append("- ใหม่")
+    if his == 1:
+        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+    if sbp >= 120:
+        recommendations.append("- ลดการบริโภคอาหารที่มีคอเลสเตอรอลสูง")
+    if dbp >= 80:
+        recommendations.append("- ลดการบริโภคอาหารที่มีน้ำตาลและไขมันทรานส์")
+    if fbs >= 80:
+        recommendations.append("- เพิ่มการบริโภคอาหารที่ช่วยเพิ่ม HDL เช่น ปลาที่มีโอเมก้า-912")
+    if HbAlc > 5.6:
+        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+    if family_his == 0:
+        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+
+    print(type(recommendations))
+    print(f"a{recommendations}")
+
+    Flex_message = []    
+    
+
+
+    if user:
+        # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
+        predict = flex_predict_Staggers(reply_text, reply_text_color)
+        if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
+            Flex_message.append(predict)
+
+        # เพิ่มข้อความการวิเคราะห์ข้อมูล
+        analysis_data = flex_analysis_data_Staggers(sbp, dbp, his_str, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his_str, colors)
+        if analysis_data:
+            Flex_message.append(analysis_data)
+
+        # เพิ่มข้อความคำแนะนำ
+        recommendations = flex_recommendations_Staggers(recommendations)
+        if recommendations:
+            Flex_message.append(recommendations)
+
+            
+
+    # ตรวจสอบว่ามีข้อความใน Flex_message ก่อนสร้าง payload
+    if Flex_message:
+        payload = {
+            "to": user,
+            "messages": Flex_message
+        }
+        # ส่งข้อมูลไปยัง LINE API
+        response = requests.post(LINE_API_URL, headers=headers, json=payload)
+
+        # ตรวจสอบผลลัพธ์
+        if response.status_code == 200:
+            print("ส่งข้อความสำเร็จโรคเบาหวาน")
+        else:
+            print(f"เกิดข้อผิดพลาดในการส่งข้อความ: {response.status_code}, {response.text}")
+    else:
+        print("ไม่มีข้อความที่ต้องส่ง")
 
 
 def send_blood_fat():
@@ -327,7 +425,7 @@ def send_comparison_result():
 
 
 def send_insertData():
-    user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form = insertData()
+    user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form, URL_add_staggers_form = insertData()
     print("User:", user)
 
     headers = {
@@ -339,7 +437,7 @@ def send_insertData():
     
     if user:
 
-        predict = payloadinsertData(URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form)
+        predict = payloadinsertData(URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form, URL_add_staggers_form )
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
@@ -358,19 +456,12 @@ def send_insertData():
 
 
 
+
+
 # สร้างเส้นทางสำหรับเรียกใช้งาน
 @app.route('/add_user_form')
 def index():
     return render_template('add_user_form.html')
-
-@app.route('/add_diabetes_form')
-def index1():
-    return render_template('add_diabetes_form.html')
-
-@app.route('/add_blood_fat_form')
-def index2():
-    return render_template('add_blood_fat_form.html')
-
 # Route สำหรับเพิ่มข้อมูลใน user_profiles
 @app.route('/add_user', methods=['POST'])
 def add_user():
@@ -385,6 +476,10 @@ def add_user():
     user_profiles.insert_one(user1)
     return redirect('/add_user_form')
 
+# สร้างเส้นทางสำหรับเรียกใช้งาน
+@app.route('/add_diabetes_form')
+def index1():
+    return render_template('add_diabetes_form.html')
 # Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
 @app.route('/add_Diabetes', methods=['POST'])
 def add_Diabetes():
@@ -405,7 +500,7 @@ def add_Diabetes():
         bmi = float(bmi)
         visceral = float(visceral)
         wc = float(wc)
-        ht = float(ht)
+        ht = int(ht)
         sbp = float(sbp)
         dbp = float(dbp)
         fbs = float(fbs)
@@ -432,25 +527,100 @@ def add_Diabetes():
     Diabetes_collection.insert_one(test)
     return redirect('/add_diabetes_form')
 
-# Route สำหรับเพิ่มข้อมูลใน food_recommendations
-@app.route('/add_food', methods=['POST'])
-def add_food():
-    id = request.form['food_id']
-    name = request.form['food_name']
-    height = request.form['food_height']
-    food = {'_id': id, 'ชื่อ': name, 'ส่วนสูง': height}
-    food_recommendations.insert_one(food)
-    return redirect('/')
+# สร้างเส้นทางสำหรับเรียกใช้งาน
+@app.route('/add_blood_fat_form')
+def index2():
+    return render_template('add_blood-fat_form.html')
+# Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
+@app.route('/add_Blood_fat', methods=['POST'])
+def add_Blood_fat():
+    userId = request.form['userId']
+    Gender = request.form['Gender']
+    Weight = request.form['Weight']
+    Height = request.form['Height']
+    Cholesterol = request.form['Cholesterol']
+    Triglycerider = request.form['Triglycerider']
+    Hdl = request.form['Hdl']
+    Ldl = request.form['Ldl']
 
-# Route สำหรับเพิ่มข้อมูลใน daily_activities
-@app.route('/add_activity', methods=['POST'])
-def add_activity():
-    id = request.form['activity_id']
-    name = request.form['activity_name']
-    height = request.form['activity_height']
-    activity = {'_id': id, 'ชื่อ': name, 'ส่วนสูง': height}
-    daily_activities.insert_one(activity)
-    return redirect('/')
+    try:
+        Gender = int(Gender)
+        Weight = float(Weight)
+        Height = float(Height)
+        Cholesterol = float(Cholesterol)
+        Triglycerider = float(Triglycerider)
+        Hdl = float(Hdl)
+        Ldl = float(Ldl)
+    except ValueError:
+        return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
+
+    timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
+    test = {
+        'userId': userId,
+        'Gender': Gender,
+        'Weight': Weight,
+        'Height': Height,
+        'Cholesterol': Cholesterol,
+        'Triglycerider': Triglycerider,
+        'Hdl': Hdl,
+        'Ldl': Ldl,
+        'timestamp': timestamp
+
+    }
+    blood_fat_collection.insert_one(test)
+    return redirect('/add_blood_fat_form')
+
+
+# สร้างเส้นทางสำหรับเรียกใช้งาน
+@app.route('/add_staggers_form')
+def index3():
+    return render_template('add_staggers_form.html')
+# Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
+@app.route('/add_Staggers', methods=['POST'])
+def add_Staggers():
+    userId = request.form['userId']
+    sbp = request.form['sbp']
+    dbp = request.form['dbp']
+    his = request.form['his']
+    smoke = request.form['smoke']
+    fbs = request.form['fbs']
+    HbAlc = request.form['HbAlc']
+    total_Cholesterol = request.form['total_Cholesterol']
+    Exe = request.form['Exe']
+    bmi = request.form['bmi']
+    family_his = request.form['family_his']
+
+    try:
+        sbp = float(sbp)
+        dbp = float(dbp)
+        his = float(his)
+        smoke = float(smoke)
+        fbs = float(fbs)
+        HbAlc = float(HbAlc)
+        total_Cholesterol = float(total_Cholesterol)
+        Exe = float(Exe)
+        bmi = float(bmi)
+        family_his = int(family_his)
+    except ValueError:
+        return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
+
+    timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
+    test = {
+        'userId': userId,
+        'sbp': sbp,
+        'dbp': dbp,
+        'his': his,
+        'smoke': smoke,
+        'fbs': fbs,
+        'HbAlc': HbAlc,
+        'total_Cholesterol': total_Cholesterol,
+        'Exe': Exe,
+        'bmi': bmi,
+        'family_his': family_his,
+        'timestamp': timestamp
+    }
+    Staggers_collection.insert_one(test)
+    return redirect('/add_staggers_form')
 
 
 
