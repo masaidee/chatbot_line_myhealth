@@ -49,7 +49,7 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
 
 
-ngrok = "https://3873-223-206-78-223.ngrok-free.app"
+ngrok = "https://45e6-223-206-78-223.ngrok-free.app"
 
 #การเปรียบเทียบ
 def calculate_average(data_list):
@@ -238,18 +238,16 @@ def Checkup_diabetes():
 
             
     if ht == 1:
-        ht_str = "มีประวัติ"
+        ht_str = "มี"
     else:
-        ht_str = "ไม่มีประวัติ"
+        ht_str = "ไม่มี"
 
     if family_his == 1:
-        family_his_str = "มีประวัติ"
+        family_his_str = "มี"
     else:
-                    family_his_str = "ไม่มีประวัติ"
+        family_his_str = "ไม่มี"
 
     return user, reply_text, age, bmi, visceral, wc, ht, ht_str, sbp, dbp, fbs, HbAlc, family_his, family_his_str
-   
-
 
 #เช็คโรคสมอง
 def Checkup_Staggers():
@@ -283,7 +281,7 @@ def Checkup_Staggers():
     input_data = [[sbp, dbp, his, smoke, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his]]
     print("Input data:", input_data)
 
-    prediction = Diabetes_classifier.predict(input_data)
+    prediction = Staggers_classifier.predict(input_data)
 
     if prediction[0] == 0:
         reply_text = "ความเสี่ยงต่ำ"
@@ -295,23 +293,30 @@ def Checkup_Staggers():
 
             
     if his == 1:
-        his_str = "มีประวัติ"
+        his_str = "มี"
     else:
-        his_str = "ไม่มีประวัติ"
+        his_str = "ไม่มี"
 
     if smoke == 0:
-        smoke_str = "ไม่เคบสูบ"
+        smoke_str = "ไม่เคย"
     elif smoke == 1:
-        smoke_str = "หยุดสูบแล้ว"
+        smoke_str = "หยุดสูบ"
     else:
         smoke_str = "สูบอยู่"
 
-    if family_his == 1:
-        family_his_str = "มีประวัติ"
+    if Exe == 0:
+        Exe_str = "0"
+    elif Exe == 1:
+        Exe_str = "150-200"
     else:
-        family_his_str = "ไม่มีประวัติ"
+        Exe_str = "> 200"
 
-    return user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his, family_his_str
+    if family_his == 1:
+        family_his_str = "มี"
+    else:
+        family_his_str = "ไม่มี"
+
+    return user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, Exe_str, bmi, family_his, family_his_str
 
 #เพิ่มข้อมูล
 def insertData():
@@ -337,3 +342,57 @@ def getUser():
     age = user_data.get("age", "")
     a = f"ชื่อ: {name} อายุ: {age}"
     return a
+
+
+
+import pickle
+from fuzzywuzzy import process, fuzz
+from datetime import datetime
+
+# โหลดโมเดลและข้อมูล
+try:
+    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\chatbot_model.pkl", "rb") as f:
+        model = pickle.load(f)
+
+    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\vectorizer.pkl", "rb") as f:
+        vectorizer = pickle.load(f)
+
+    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions_answers.pkl", "rb") as f:
+        data = pickle.load(f)
+        questions = data["questions"]
+        answers = data["answers"]
+except FileNotFoundError as e:
+    print(f"เกิดข้อผิดพลาด: {e}")
+    exit()
+
+# ฟังก์ชัน Fuzzy Matching
+def find_best_match_with_fuzzy(question, threshold=50):
+    best_match = process.extractOne(question, questions, scorer=fuzz.partial_ratio)
+
+    if best_match is None or best_match[1] < threshold:
+        return "ขอโทษค่ะ ฉันไม่เข้าใจคำถาม กรุณาถามใหม่อีกครั้ง"
+
+    best_answer = answers[questions.index(best_match[0])]
+
+    # รับค่าปัจจุบันของวัน/เวลา
+    now = datetime.now()
+    today_date = now.strftime("%d/%m/%Y")
+    today_name = now.strftime("%A")
+    current_time = now.strftime("%H:%M:%S")
+
+    days_th = {
+        "Monday": "วันจันทร์",
+        "Tuesday": "วันอังคาร",
+        "Wednesday": "วันพุธ",
+        "Thursday": "วันพฤหัสบดี",
+        "Friday": "วันศุกร์",
+        "Saturday": "วันเสาร์",
+        "Sunday": "วันอาทิตย์"
+    }
+
+    # แทนค่าตัวแปรในข้อความ
+    best_answer = best_answer.replace("{date}", today_date)
+    best_answer = best_answer.replace("{day}", days_th.get(today_name, today_name))
+    best_answer = best_answer.replace("{time}", current_time)
+
+    return best_answer

@@ -177,7 +177,7 @@ def flex_predict_Staggers(reply_text, reply_text_color):
                 "contents": [
                     {
                     "type": "text",
-                    "text": "ความเสี่ยงโรคเบาหวาน",
+                    "text": "ความเสี่ยงโรคสมอง",
                     "size": "lg"
                     },
                     {
@@ -197,7 +197,7 @@ def flex_predict_Staggers(reply_text, reply_text_color):
         }
     }
 
-def flex_analysis_data_Staggers(sbp, dbp, his_str, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his_str, colors):
+def flex_analysis_data_Staggers(sbp, dbp, his_str, smoke_str, fbs, HbAlc, total_Cholesterol, Exe_str, bmi, family_his_str, colors):
     return {
         "type": "flex",
         "altText": "Flex Message",
@@ -209,16 +209,16 @@ def flex_analysis_data_Staggers(sbp, dbp, his_str, smoke_str, fbs, HbAlc, total_
                 "contents": [
                     {"type": "text", "text": "ข้อมูลการวิเคราะห์", "size": "lg", "weight": "bold"},
                     {"type": "separator"},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "เพศ:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{sbp}", "color": f"{colors['sbp']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ดัชนีมวลกาย:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{dbp}", "color": f"{colors['dbp']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "Visceral Fat:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{his_str}", "color": f"{colors['his']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "รอบเอาต่อความสูง:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{smoke_str}", "color": f"{colors['smoke']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "โรคความดันโลหิตสูง:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{fbs}", "color": f"{colors['fbs']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ความดันโลหิตช่วงบน:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{HbAlc}", "color": f"{colors['HbAlc']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ความดันโลหิตช่วงล่าง:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{total_Cholesterol}", "color": f"{colors['total_Cholesterol']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "น้ำตาลในเลือดก่อนอาหาร:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{Exe}", "color": f"{colors['Exe']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ระดับน้ำตาลสะสมนเลือด:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{bmi}", "color": f"{colors['bmi']}","align": "end"}]},
-                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ประวัติเบาหวานในครอบครัว:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{family_his_str}", "color": f"{colors['family_his']}","align": "end"}]}
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ความดันโลหิตตัวบน:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{sbp}", "color": f"{colors['sbp']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ความดันโลหิตตัวล่าง:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{dbp}", "color": f"{colors['dbp']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ประวัติโรคประจำตัว:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{his_str}", "color": f"{colors['his']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ประวัติสูบบุหรี่:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{smoke_str}", "color": f"{colors['smoke']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "น้ำตาลในเลือด:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{fbs}", "color": f"{colors['fbs']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ฮีโมโกลบิน เอ วัน ซี:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{HbAlc}", "color": f"{colors['HbAlc']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "คอเลสเตอรอล:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{total_Cholesterol}", "color": f"{colors['total_Cholesterol']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "การออกกำลังกาย/นาที:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{Exe_str}", "color": f"{colors['Exe']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ดัชนีมวลกาย:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{bmi}", "color": f"{colors['bmi']}","align": "end"}]},
+                    {"type": "box", "layout": "horizontal", "contents": [{"type": "text", "text": "ประวัติในครอบครัว:", "wrap": True, "flex": 3}, {"type": "text", "text": f"{family_his_str}", "color": f"{colors['family_his']}","align": "end"}]}
                 ]
             }
         }

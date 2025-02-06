@@ -83,27 +83,85 @@ def serialize_user(user):
 #     users = list(users_collection.find())
 #     return jsonify([serialize_user(user) for user in users]), 200
 
+from flask import Flask, request, jsonify
+import pickle
+from fuzzywuzzy import process, fuzz
+from datetime import datetime
+
+
+# โหลดโมเดลและข้อมูล
+try:
+    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\chatbot_model.pkl", "rb") as f:
+        model = pickle.load(f)
+
+    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\vectorizer.pkl", "rb") as f:
+        vectorizer = pickle.load(f)
+
+    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions_answers.pkl", "rb") as f:
+        data = pickle.load(f)
+        questions = data["questions"]
+        answers = data["answers"]
+except FileNotFoundError as e:
+    print(f"เกิดข้อผิดพลาด: {e}")
+    exit()
+
+# ฟังก์ชัน Fuzzy Matching
+def find_best_match_with_fuzzy(question, threshold=50):
+    best_match = process.extractOne(question, questions, scorer=fuzz.partial_ratio)
+
+    if best_match is None or best_match[1] < threshold:
+        return "ขอโทษค่ะ ฉันไม่เข้าใจคำถาม กรุณาถามใหม่อีกครั้ง"
+
+    best_answer = answers[questions.index(best_match[0])]
+
+    # รับค่าปัจจุบันของวัน/เวลา
+    now = datetime.now()
+    today_date = now.strftime("%d/%m/%Y")
+    today_name = now.strftime("%A")
+    current_time = now.strftime("%H:%M:%S")
+
+    days_th = {
+        "Monday": "วันจันทร์",
+        "Tuesday": "วันอังคาร",
+        "Wednesday": "วันพุธ",
+        "Thursday": "วันพฤหัสบดี",
+        "Friday": "วันศุกร์",
+        "Saturday": "วันเสาร์",
+        "Sunday": "วันอาทิตย์"
+    }
+
+    # แทนค่าตัวแปรในข้อความ
+    best_answer = best_answer.replace("{date}", today_date)
+    best_answer = best_answer.replace("{day}", days_th.get(today_name, today_name))
+    best_answer = best_answer.replace("{time}", current_time)
+
+    return best_answer
+
 @app.route('/', methods=['POST'])
 def MainFunction():
-
+    
     # รับข้อมูลที่ส่งมาจาก Dialogflow
     question_from_dailogflow_raw = request.get_json(silent=True, force=True)
+    print("Received request:", question_from_dailogflow_raw)  # Debugging line
     answer_from_bot = generating_answer(question_from_dailogflow_raw)
     
     # ส่งคำตอบกลับไปยัง LINE
     response_json = {
         "fulfillmentText": answer_from_bot
     }
+    print("Response to be sent:", response_json)  # Debugging line
     return jsonify(response_json)
 
 def generating_answer(question_from_dailogflow_raw):
     # ดึง queryResult จากข้อมูลที่ได้รับ
     question_from_dailogflow_dict = question_from_dailogflow_raw.get("queryResult", {})
     intent_name = question_from_dailogflow_dict.get("intent", {}).get("displayName", "")
+    question = question_from_dailogflow_dict.get("queryText", "")
+    
 
     # ตรวจสอบค่า intent_name เพื่อเรียกใช้ฟังก์ชันที่ต้องการ 
     if intent_name == 'insertData': #เพิ่มข้อมูล
-        answer_str = send_insertData() 
+        answer_str = send_insertData()
 
     elif intent_name == 'compare': #เปรียบเทียบข้อมูล
         answer_str = send_comparison_result()
@@ -117,7 +175,9 @@ def generating_answer(question_from_dailogflow_raw):
     elif intent_name == 'Check - Staggers':  # ตรวจโรคสมอง โดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
         answer_str = send_Staggers()
     else:
-        answer_str = "คุณต้องการแบบไหน"
+        # ถ้า intent_name ไม่ตรงกับเงื่อนไขที่กำหนด ให้ใช้ฟังก์ชัน find_best_match_with_fuzzy
+        answer_str = find_best_match_with_fuzzy(question, threshold=50)
+
     return answer_str
 
 def send_diabetes():
@@ -149,24 +209,31 @@ def send_diabetes():
 
     # สร้างรายการคำแนะนำเพิ่มเติม
     recommendations = []
-    if bmi > 24.9:
-        recommendations.append("- ใหม่")
-    if visceral > 9:
-        recommendations.append("- ลดการบริโภคอาหารที่มีน้ำตาลและไขมันทรานส์")
-    if wc >= 0.50:
-        recommendations.append("- เพิ่มการบริโภคอาหารที่ช่วยเพิ่ม HDL เช่น ปลาที่มีโอเมก้า-4")
-    if ht == 1:
-        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
-    if sbp >= 120:
-        recommendations.append("- ลดการบริโภคอาหารที่มีคอเลสเตอรอลสูง")
-    if dbp >= 80:
-        recommendations.append("- ลดการบริโภคอาหารที่มีน้ำตาลและไขมันทรานส์")
-    if fbs >= 80:
-        recommendations.append("- เพิ่มการบริโภคอาหารที่ช่วยเพิ่ม HDL เช่น ปลาที่มีโอเมก้า-912")
-    if HbAlc > 5.6:
-        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
-    if family_his == 0:
-        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+    if reply_text == "ความเสี่ยงต่ำ":
+        recommendations.append("- เพื่อป้องกันการเกิดโรคเบาหวานในอนาคต ควรออกกำลังกายอย่างสม่ำเสมอ ควบคุมน้ำหนักตัวให้อยู่ในเกณฑ์ปกติ ความ ดันโลหิตโดยไม่ควรเกิน 140/90 มม.ปรอท")
+    elif reply_text == "ความเสี่ยงปานกลาง":
+        recommendations.append("- เพื่อป้องกันการเกิดโรคเบาหวานในอนาคต ควรออกกำลังกายอย่างสม่ำเสมอ ควบคุมน้ำหนักตัวให้อยู่ในเกณฑ์ปกติ ความ คันโลหิตโดยไม่ควรเกิน 140/90 มม.ปรอท และตรวจน้ำตาลในเลือด อย่างน้อยปีละ 1 ครั้ง ทุกปี")
+    else:
+        recommendations.append("- ด้วยมีโอกาสสูงมากที่จะเกิดโรคเบาหวานในอนาคต ควรควบคุมอาหารอย่างเคร่งครัดโดยเฉพาะเกี่ยวกับปริมาณคาร์โบไฮเดรตหรือคาร์บในอาหารซึ่งเป็นสารอาหารที่มีผลต่อระดับตาลในเลือด มากที่สุดเมื่อเทียบกับสารอาหารชนิดอื่น ๆมากที่สุดเมื่อเทียบกับสารอาหารชนิดอื่น ๆ ออกกำลังกายอย่างสม่ำเสมอ ควบคุมน้ำหนักตัวให้อยู่ในเกณฑ์ปกติ ความันโลหิตไม่ควรเกิน 140/90 มม.ปรอท และตรวจติดตามระดับน้ำตาลในเลือดอย่างน้อยปีละ 1 ครั้ง ทุกปี")
+        
+    # if bmi > 24.9:
+    #     recommendations.append("- ใหม่")
+    # if visceral > 9:
+    #     recommendations.append("- ลดการบริโภคอาหารที่มีน้ำตาลและไขมันทรานส์")
+    # if wc >= 0.50:
+    #     recommendations.append("- เพิ่มการบริโภคอาหารที่ช่วยเพิ่ม HDL เช่น ปลาที่มีโอเมก้า-4")
+    # if ht == 1:
+    #     recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+    # if sbp >= 120:
+    #     recommendations.append("- ลดการบริโภคอาหารที่มีคอเลสเตอรอลสูง")
+    # if dbp >= 80:
+    #     recommendations.append("- ลดการบริโภคอาหารที่มีน้ำตาลและไขมันทรานส์")
+    # if fbs >= 80:
+    #     recommendations.append("- เพิ่มการบริโภคอาหารที่ช่วยเพิ่ม HDL เช่น ปลาที่มีโอเมก้า-912")
+    # if HbAlc > 5.6:
+    #     recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+    # if family_his == 0:
+    #     recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
 
     print(type(recommendations))
     print(f"a{recommendations}")
@@ -213,7 +280,7 @@ def send_diabetes():
 
 
 def send_Staggers():
-    user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his, family_his_str = Checkup_Staggers()
+    user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, Exe_str, bmi, family_his, family_his_str = Checkup_Staggers()
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -227,34 +294,41 @@ def send_Staggers():
         reply_text_color = "#FF0000"  # สีแดงถ้า 
 
     colors = {
-        "sbp": "#008000" if sbp <= 120 else "#FF0000",
-        "dbp": "#008000" if dbp <= 80 else "#FF0000",
-        "his": "#008000" if his == 0 else "#FF0000",
-        "smoke": "#008000" if smoke == 0 else "#FF0000",
-        "fbs": "#008000" if fbs <= 80 else "#FF0000",
-        "HbAlc": "#008000" if HbAlc < 5.6 else "#FF0000",
-        "total_Cholesterol": "#008000" if total_Cholesterol < 200 else "#FF0000",
-        "Exe": "#008000" if Exe == 1 else "#FF0000",
-        "bmi": "#008000" if bmi < 24.9 else "#FF0000",
-        "family_his": "#008000" if family_his == 0 else "#FF0000"
+        "sbp": "#FF0000" if sbp > 130 else "#008000",
+        "dbp": "#FF0000" if dbp > 85 else "#008000",
+        "his": "#FF0000" if his == 1 else "#008000",
+        "smoke": "#FF0000" if smoke == 2 else "#008000",
+        "fbs": "#FF0000" if fbs > 125 else "#008000",
+        "HbAlc": "#FF0000" if HbAlc > 6.0 else "#008000",
+        "total_Cholesterol": "#FF0000" if total_Cholesterol > 240 else "#008000",
+        "Exe": "#FF0000" if Exe == 0 else "#008000",
+        "bmi": "#FF0000" if bmi > 30 else "#008000",
+        "family_his": "#FF0000" if family_his == 1 else "#008000"
     }
 
     # สร้างรายการคำแนะนำเพิ่มเติม
     recommendations = []
-    if bmi > 24.9:
-        recommendations.append("- ใหม่")
-    if his == 1:
-        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
-    if sbp >= 120:
-        recommendations.append("- ลดการบริโภคอาหารที่มีคอเลสเตอรอลสูง")
-    if dbp >= 80:
-        recommendations.append("- ลดการบริโภคอาหารที่มีน้ำตาลและไขมันทรานส์")
-    if fbs >= 80:
-        recommendations.append("- เพิ่มการบริโภคอาหารที่ช่วยเพิ่ม HDL เช่น ปลาที่มีโอเมก้า-912")
-    if HbAlc > 5.6:
-        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
-    if family_his == 0:
-        recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+
+    if reply_text == "ความเสี่ยงต่ำ":
+        recommendations.append("- เพื่อป้องกันการเกิดโรคหลอดเลือดเลือดสมองในอนาคต ควรออกกำลังกายอย่างสม่ำเสมอควบคุมน้ำหนักตัวให้ BMI อยู่ในเกณฑ์ไม่เกิน 23 และควรประเมินความเสี่ยงทุก 2 ปี")
+    elif reply_text == "ความเสี่ยงปานกลาง":
+        recommendations.append("- เพื่อป้องกันก่รเกิดโรคหลอดเลือดสมองในอนาคต ควรควบคุมอาหาร ควบคุมน้ำหนักตัว ความดันโลหิตไม่ควรเกิน 120/80 มม.ปรอด ออกกำลังกายสม่ำเสมอ ควรงดการดื่มสุรา และสูบบุหรี่ และตรวจสุขภาพประจำปีทุกปี")
+    else:
+        recommendations.append("- เพื่อป้องกันการเกิดโรคหลอดเลือดสมองในอนาคต แนะนำให้ปรึกษาแพทย์ ควบคุมอาหาร ควบคุมนำหนักตัว ความดันโลหิตไม่ควรเกิน 120/80 มม.ปรอด ต้องงดการดื่มสุราและสูบบุหรี่อย่างเคร่งครัด รักษาดรคประจำตัวอย่างต่อเนื่องแลัตรวจสุขภาพประจำปีทุกปี")
+    # if bmi > 24.9:
+    #     recommendations.append("- ใหม่")
+    # if his == 1:
+    #     recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+    # if sbp >= 120:
+    #     recommendations.append("- ลดการบริโภคอาหารที่มีคอเลสเตอรอลสูง")
+    # if dbp >= 80:
+    #     recommendations.append("- ลดการบริโภคอาหารที่มีน้ำตาลและไขมันทรานส์")
+    # if fbs >= 80:
+    #     recommendations.append("- เพิ่มการบริโภคอาหารที่ช่วยเพิ่ม HDL เช่น ปลาที่มีโอเมก้า-912")
+    # if HbAlc > 5.6:
+    #     recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
+    # if family_his == 0:
+    #     recommendations.append("- ลดการบริโภคไขมันอิ่มตัวและอาหารที่มี LDL สูง")
 
     print(type(recommendations))
     print(f"a{recommendations}")
@@ -270,7 +344,7 @@ def send_Staggers():
             Flex_message.append(predict)
 
         # เพิ่มข้อความการวิเคราะห์ข้อมูล
-        analysis_data = flex_analysis_data_Staggers(sbp, dbp, his_str, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, bmi, family_his_str, colors)
+        analysis_data = flex_analysis_data_Staggers(sbp, dbp, his_str, smoke_str, fbs, HbAlc, total_Cholesterol, Exe_str, bmi, family_his_str, colors)
         if analysis_data:
             Flex_message.append(analysis_data)
 
@@ -593,8 +667,8 @@ def add_Staggers():
     try:
         sbp = float(sbp)
         dbp = float(dbp)
-        his = float(his)
-        smoke = float(smoke)
+        his = int(his)
+        smoke = int(smoke)
         fbs = float(fbs)
         HbAlc = float(HbAlc)
         total_Cholesterol = float(total_Cholesterol)
@@ -625,8 +699,76 @@ def add_Staggers():
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# import pickle
+# from fuzzywuzzy import process, fuzz
+# from datetime import datetime
+
+# # โหลดโมเดลและข้อมูล
+# try:
+#     with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\chatbot_model.pkl", "rb") as f:
+#         model = pickle.load(f)
+
+#     with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\vectorizer.pkl", "rb") as f:
+#         vectorizer = pickle.load(f)
+
+#     with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions_answers.pkl", "rb") as f:
+#         data = pickle.load(f)
+#         questions = data["questions"]
+#         answers = data["answers"]
+# except FileNotFoundError as e:
+#     print(f"เกิดข้อผิดพลาด: {e}")
+#     exit()
+
+# # ฟังก์ชัน Fuzzy Matching
+# def find_best_match_with_fuzzy(question, threshold=50):
+#     best_match = process.extractOne(question, questions, scorer=fuzz.partial_ratio)
+
+#     if best_match is None or best_match[1] < threshold:
+#         return "ขอโทษค่ะ ฉันไม่เข้าใจคำถาม กรุณาถามใหม่อีกครั้ง"
+
+#     best_answer = answers[questions.index(best_match[0])]
+
+#     # รับค่าปัจจุบันของวัน/เวลา
+#     now = datetime.now()
+#     today_date = now.strftime("%d/%m/%Y")
+#     today_name = now.strftime("%A")
+#     current_time = now.strftime("%H:%M:%S")
+
+#     days_th = {
+#         "Monday": "วันจันทร์",
+#         "Tuesday": "วันอังคาร",
+#         "Wednesday": "วันพุธ",
+#         "Thursday": "วันพฤหัสบดี",
+#         "Friday": "วันศุกร์",
+#         "Saturday": "วันเสาร์",
+#         "Sunday": "วันอาทิตย์"
+#     }
+
+#     # แทนค่าตัวแปรในข้อความ
+#     best_answer = best_answer.replace("{date}", today_date)
+#     best_answer = best_answer.replace("{day}", days_th.get(today_name, today_name))
+#     best_answer = best_answer.replace("{time}", current_time)
+
+#     return best_answer
+
+
+
+
+
+
 if __name__ == "__main__":
     app.run(debug=False, port=5000)
-
-
-
