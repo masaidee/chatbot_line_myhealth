@@ -243,7 +243,7 @@ def flex_recommendations_Staggers(recommendations):
 
 
 #เปรียบเทียบข้อมูล
-def compare(key1, diff1, avg1):
+def compare_diabetes(key1, diff1, avg1):
     key_contents = [
         {
             "type": "text",
@@ -356,7 +356,7 @@ def compare(key1, diff1, avg1):
     #     }
     # }
 
-def compare_img(image_url):
+def compare_img_diabetes(image_url):
     return {
         "type": "flex",
         "altText": "Flex Message",

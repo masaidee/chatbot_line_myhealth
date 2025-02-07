@@ -8,12 +8,11 @@ import os
 import requests
 import matplotlib.pyplot as plt
 from scipy.stats import linregress
-from flask_cors import CORS
 from matplotlib import font_manager as fm
-from datetime import datetime  # Import the datetime class
+from datetime import datetime
+from fuzzywuzzy import process, fuzz
 
-app = Flask(__name__)
-CORS(app)
+
 
 
     # โหลดโมเดลที่ใช้ทำนายโรคสมอง
@@ -49,7 +48,7 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
 
 
-ngrok = "https://45e6-223-206-78-223.ngrok-free.app"
+ngrok = "https://5587-223-205-178-253.ngrok-free.app"
 
 #การเปรียบเทียบ
 def calculate_average(data_list):
@@ -75,6 +74,7 @@ def translate_keys(data, key_mapping):
         translated_data[translated_key] = value
     return translated_data
 
+#การเปรียบเทียบโณคเบาหวาน
 def compare_and_visualize_diabetes_data():
     req = request.get_json(silent=True, force=True)
     user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
@@ -148,6 +148,143 @@ def compare_and_visualize_diabetes_data():
 
     # send_comparison_result(user, comparison_result, image_url)
     return user, latest_avg, previous_avg, image_url 
+
+#การเปรียบเทียบโรคไขมันในเลือด
+def compare_and_visualize_blood_fat_data():
+    req = request.get_json(silent=True, force=True)
+    user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+
+    # ดึงข้อมูลจาก MongoDB ตาม user_id
+    latest_data = blood_fat_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
+    previous_data = list(blood_fat_collection.find({"userId": user}))  # ข้อมูลก่อนหน้า (หลายชุด)
+
+    print(f"ข้อมูลล่าสุด{latest_data}")
+    print(f"ข้อมูลเก่า{previous_data}")
+
+    if not latest_data or len(previous_data) == 0:
+        return "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ", None
+
+    # คำนวณค่าเฉลี่ย
+    previous_avg = calculate_average(previous_data)
+    latest_avg = {key: value for key, value in latest_data.items() if isinstance(value, (int, float))}
+
+    # แผนที่การแปลคีย์
+    key_mapping = {
+        "Cholesterol": "คอเลสเตอรอล",
+        "Triglycerides": "ไตรกลีเซอไรด์",
+        "Hdl": "เอชดีแอล",
+        "Ldl": "แอลดีแอล"
+    }
+
+    # แปลคีย์ในข้อมูล
+    latest_avg = translate_keys(latest_avg, key_mapping)
+    previous_avg = translate_keys(previous_avg, key_mapping)
+
+    # ระบุเส้นทางไปยังไฟล์ฟอนต์ที่รองรับภาษาไทย
+    font_path = r"D:\masaidee\Internship\from\THSarabun\THSarabun.ttf"  # แก้ไขเส้นทางไปยังฟอนต์ไทยที่คุณใช้งาน
+
+    # โหลดฟอนต์ที่ระบุ
+    prop = fm.FontProperties(fname=font_path)
+
+    # สร้างกราฟ
+    labels = [key for key in latest_avg.keys()]
+    latest_values = [latest_avg[key] for key in labels]
+    previous_values = [previous_avg[key] for key in labels]
+
+    plt.figure(figsize=(8, 6))
+    plt.bar(range(len(labels)), latest_values, width=0.4, label="ข้อมูลล่าสุด", color="blue")
+    plt.bar([i + 0.4 for i in range(len(labels))], previous_values, width=0.4, label="ค่าเฉลี่ยก่อนหน้า", color="orange")
+    plt.xticks([i + 0.2 for i in range(len(labels))], labels, fontproperties=prop, rotation=45, ha='right')
+    plt.ylabel("ค่าเฉลี่ย", color="red", fontsize=20, fontproperties=prop)
+    plt.xlabel("ค่าของผู้ใช้", color="blue", fontsize=20, fontproperties=prop)
+    plt.title("เปรียบเทียบ", fontproperties=prop, fontsize=30, color="red")
+    plt.legend(prop=prop)
+    plt.tight_layout()
+    now = datetime.now()
+    # แสดงวันที่และเวลาในรูปแบบที่ต้องการ
+    formatted_time = now.strftime("%d-%m-%Y.%H-%M-%S")
+    user_dir = os.path.join(f"static/{user}")
+    os.makedirs(user_dir, exist_ok=True)  # Ensure the directory exists
+    graph_path = os.path.join(f"{user_dir}/{formatted_time}.png")
+    plt.savefig(graph_path)
+    plt.close()
+
+    print(formatted_time)
+    image_url = f"{ngrok}/{graph_path}"
+
+    return user, latest_avg, previous_avg, image_url
+
+#การเปรียบเทียบโรคสมอง
+def compare_and_visualize_staggers_data():
+    req = request.get_json(silent=True, force=True)
+    user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+
+    # ดึงข้อมูลจาก MongoDB ตาม user_id
+    latest_data = Staggers_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
+    previous_data = list(Staggers_collection.find({"userId": user}))  # ข้อมูลก่อนหน้า (หลายชุด)
+
+    print(f"ข้อมูลล่าสุด{latest_data}")
+    print(f"ข้อมูลเก่า{previous_data}")
+
+    if not latest_data or len(previous_data) == 0:
+        return "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ", None
+
+    # คำนวณค่าเฉลี่ย
+    previous_avg = calculate_average(previous_data)
+    latest_avg = {key: value for key, value in latest_data.items() if isinstance(value, (int, float))}
+
+    # แผนที่การแปลคีย์
+    key_mapping = {
+        "sbp": "ความดันตัวบน",
+        "dbp": "ความดันตัวล่าง",
+        "his": "ประวัติการรักษา",
+        "smoke": "การสูบบุหรี่",
+        "fbs": "น้ำตาลในเลือด",
+        "HbAlc": "ฮีโมโกลบิน A1c",
+        "total_Cholesterol": "คอเลสเตอรอลรวม",
+        "Exe": "การออกกำลังกาย",
+        "bmi": "ดัชนีมวลกาย",
+        "family_his": "ประวัติครอบครัว"
+    }
+
+    # แปลคีย์ในข้อมูล
+    latest_avg = translate_keys(latest_avg, key_mapping)
+    previous_avg = translate_keys(previous_avg, key_mapping)
+
+    # ระบุเส้นทางไปยังไฟล์ฟอนต์ที่รองรับภาษาไทย
+    font_path = r"D:\masaidee\Internship\from\THSarabun\THSarabun.ttf"  # แก้ไขเส้นทางไปยังฟอนต์ไทยที่คุณใช้งาน
+
+    # โหลดฟอนต์ที่ระบุ
+    prop = fm.FontProperties(fname=font_path)
+
+    # สร้างกราฟ
+    labels = [key for key in latest_avg.keys()]
+    latest_values = [latest_avg[key] for key in labels]
+    previous_values = [previous_avg[key] for key in labels]
+
+    plt.figure(figsize=(8, 6))
+    plt.bar(range(len(labels)), latest_values, width=0.4, label="ข้อมูลล่าสุด", color="blue")
+    plt.bar([i + 0.4 for i in range(len(labels))], previous_values, width=0.4, label="ค่าเฉลี่ยก่อนหน้า", color="orange")
+    plt.xticks([i + 0.2 for i in range(len(labels))], labels, fontproperties=prop, rotation=45, ha='right')
+    plt.ylabel("ค่าเฉลี่ย", color="red", fontsize=20, fontproperties=prop)
+    plt.xlabel("ค่าของผู้ใช้", color="blue", fontsize=20, fontproperties=prop)
+    plt.title("เปรียบเทียบ", fontproperties=prop, fontsize=30, color="red")
+    plt.legend(prop=prop)
+    plt.tight_layout()
+    now = datetime.now()
+    # แสดงวันที่และเวลาในรูปแบบที่ต้องการ
+    formatted_time = now.strftime("%d-%m-%Y.%H-%M-%S")
+    user_dir = os.path.join(f"static/{user}")
+    os.makedirs(user_dir, exist_ok=True)  # Ensure the directory exists
+    graph_path = os.path.join(f"{user_dir}/{formatted_time}.png")
+    plt.savefig(graph_path)
+    plt.close()
+
+    print(formatted_time)
+    image_url = f"{ngrok}/{graph_path}"
+
+    return user, latest_avg, previous_avg, image_url
+
 
 
 #เช็คโรคไขมันในเลือด
@@ -345,17 +482,16 @@ def getUser():
 
 
 
-import pickle
-from fuzzywuzzy import process, fuzz
-from datetime import datetime
+
+
 
 # โหลดโมเดลและข้อมูล
 try:
-    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\chatbot_model.pkl", "rb") as f:
-        model = pickle.load(f)
+    # with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\chatbot_model.pkl", "rb") as f:
+    #     model = pickle.load(f)
 
-    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\vectorizer.pkl", "rb") as f:
-        vectorizer = pickle.load(f)
+    # with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\vectorizer.pkl", "rb") as f:
+    #     vectorizer = pickle.load(f)
 
     with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions_answers.pkl", "rb") as f:
         data = pickle.load(f)
@@ -365,7 +501,7 @@ except FileNotFoundError as e:
     print(f"เกิดข้อผิดพลาด: {e}")
     exit()
 
-# ฟังก์ชัน Fuzzy Matching
+# ฟังก์ชัน การตอบคำถาม
 def find_best_match_with_fuzzy(question, threshold=50):
     best_match = process.extractOne(question, questions, scorer=fuzz.partial_ratio)
 

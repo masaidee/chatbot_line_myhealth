@@ -26,11 +26,16 @@ from payload import (
     flex_analysis_data_Staggers,
     flex_recommendations_Staggers,
 
-    compare,
-    compare_img,
+    compare_diabetes,
+    compare_img_diabetes,
     payloadinsertData
     )
 from funtion import (compare_and_visualize_diabetes_data,
+                     compare_and_visualize_blood_fat_data,
+                     compare_and_visualize_staggers_data,
+
+                     find_best_match_with_fuzzy,
+                     
                      Checkup_blood_fat,
                      Checkup_diabetes,
                      Checkup_Staggers,
@@ -83,59 +88,7 @@ def serialize_user(user):
 #     users = list(users_collection.find())
 #     return jsonify([serialize_user(user) for user in users]), 200
 
-from flask import Flask, request, jsonify
-import pickle
-from fuzzywuzzy import process, fuzz
-from datetime import datetime
 
-
-# โหลดโมเดลและข้อมูล
-try:
-    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\chatbot_model.pkl", "rb") as f:
-        model = pickle.load(f)
-
-    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\vectorizer.pkl", "rb") as f:
-        vectorizer = pickle.load(f)
-
-    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions_answers.pkl", "rb") as f:
-        data = pickle.load(f)
-        questions = data["questions"]
-        answers = data["answers"]
-except FileNotFoundError as e:
-    print(f"เกิดข้อผิดพลาด: {e}")
-    exit()
-
-# ฟังก์ชัน Fuzzy Matching
-def find_best_match_with_fuzzy(question, threshold=50):
-    best_match = process.extractOne(question, questions, scorer=fuzz.partial_ratio)
-
-    if best_match is None or best_match[1] < threshold:
-        return "ขอโทษค่ะ ฉันไม่เข้าใจคำถาม กรุณาถามใหม่อีกครั้ง"
-
-    best_answer = answers[questions.index(best_match[0])]
-
-    # รับค่าปัจจุบันของวัน/เวลา
-    now = datetime.now()
-    today_date = now.strftime("%d/%m/%Y")
-    today_name = now.strftime("%A")
-    current_time = now.strftime("%H:%M:%S")
-
-    days_th = {
-        "Monday": "วันจันทร์",
-        "Tuesday": "วันอังคาร",
-        "Wednesday": "วันพุธ",
-        "Thursday": "วันพฤหัสบดี",
-        "Friday": "วันศุกร์",
-        "Saturday": "วันเสาร์",
-        "Sunday": "วันอาทิตย์"
-    }
-
-    # แทนค่าตัวแปรในข้อความ
-    best_answer = best_answer.replace("{date}", today_date)
-    best_answer = best_answer.replace("{day}", days_th.get(today_name, today_name))
-    best_answer = best_answer.replace("{time}", current_time)
-
-    return best_answer
 
 @app.route('/', methods=['POST'])
 def MainFunction():
@@ -163,8 +116,12 @@ def generating_answer(question_from_dailogflow_raw):
     if intent_name == 'insertData': #เพิ่มข้อมูล
         answer_str = send_insertData()
 
-    elif intent_name == 'compare': #เปรียบเทียบข้อมูล
-        answer_str = send_comparison_result()
+    elif intent_name == 'compare - diabetes': #เปรียบเทียบข้อมูล
+        answer_str = send_comparison_result_diabetes()
+    elif intent_name == 'compare - blood_fat': #เปรียบเทียบข้อมูล
+        answer_str = send_comparison_result_blood_fat()
+    elif intent_name == 'compare - staggers': #เปรียบเทียบข้อมูล
+        answer_str = send_comparison_result_staggers()
 
     elif intent_name == 'getUser': #เปรียบเทียบข้อมูล
         answer_str = getUser()
@@ -443,7 +400,7 @@ def send_blood_fat():
         print("ไม่มีข้อความที่ต้องส่ง")
 
 
-def send_comparison_result():
+def send_comparison_result_diabetes():
     user, latest_avg, previous_avg, image_url = compare_and_visualize_diabetes_data()
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
@@ -475,12 +432,12 @@ def send_comparison_result():
     
     if user:
         # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
-        predict = compare_img(image_url)
+        predict = compare_img_diabetes(image_url)
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
         # เพิ่มข้อความการวิเคราะห์ข้อมูล
-        analysis_data = compare(key1, diff1, avg1)
+        analysis_data = compare_diabetes(key1, diff1, avg1)
         if analysis_data:
             Flex_message.append(analysis_data)
 
@@ -497,6 +454,107 @@ def send_comparison_result():
     else:
         print(f"เกิดข้อผิดพลาดในการส่งข้อความa: {response.status_code}, {response.text}")
 
+def send_comparison_result_blood_fat():
+    user, latest_avg, previous_avg, image_url = compare_and_visualize_blood_fat_data()
+    headers = {
+        "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    key1 = []
+    diff1 = []
+    avg1 = []
+    for key in latest_avg.keys():
+        if key == "อายุ":
+            continue
+        if key in previous_avg:
+            diff = latest_avg[key] - previous_avg[key]
+            if diff > 0:
+                key1.append(key)
+                diff1.append((round(diff, 1), "#00FF00"))  # ใช้รหัสสีเขียว
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
+            elif diff < 0:
+                key1.append(key)
+                diff1.append((round(diff, 1), "#FF0000"))  # ใช้รหัสสีแดง
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
+            else:
+                key1.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
+
+    Flex_message = []
+    
+    if user:
+        # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
+        predict = compare_img_diabetes(image_url)
+        if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
+            Flex_message.append(predict)
+
+        # เพิ่มข้อความการวิเคราะห์ข้อมูล
+        analysis_data = compare_diabetes(key1, diff1, avg1)
+        if analysis_data:
+            Flex_message.append(analysis_data)
+
+    payload = {
+        "to": user,
+        "messages": Flex_message
+    }
+
+    response = requests.post(LINE_API_URL, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        print("ส่งข้อความสำเร็จ")
+    else:
+        print(f"เกิดข้อผิดพลาดในการส่งข้อความ: {response.status_code}, {response.text}")
+
+def send_comparison_result_staggers():
+    user, latest_avg, previous_avg, image_url = compare_and_visualize_staggers_data()
+    headers = {
+        "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
+        "Content-Type": "application/json"
+    }
+
+    key1 = []
+    diff1 = []
+    avg1 = []
+    for key in latest_avg.keys():
+        if key == "อายุ":
+            continue
+        if key in previous_avg:
+            diff = latest_avg[key] - previous_avg[key]
+            if diff > 0:
+                key1.append(key)
+                diff1.append((round(diff, 1), "#00FF00"))  # ใช้รหัสสีเขียว
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
+            elif diff < 0:
+                key1.append(key)
+                diff1.append((round(diff, 1), "#FF0000"))  # ใช้รหัสสีแดง
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
+            else:
+                key1.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
+
+    Flex_message = []
+    
+    if user:
+        # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
+        predict = compare_img_diabetes(image_url)
+        if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
+            Flex_message.append(predict)
+
+        # เพิ่มข้อความการวิเคราะห์ข้อมูล
+        analysis_data = compare_diabetes(key1, diff1, avg1)
+        if analysis_data:
+            Flex_message.append(analysis_data)
+
+    payload = {
+        "to": user,
+        "messages": Flex_message
+    }
+
+    response = requests.post(LINE_API_URL, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        print("ส่งข้อความสำเร็จ")
+    else:
+        print(f"เกิดข้อผิดพลาดในการส่งข้อความ: {response.status_code}, {response.text}")
 
 def send_insertData():
     user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form, URL_add_staggers_form = insertData()
