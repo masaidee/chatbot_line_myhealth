@@ -31,15 +31,12 @@ with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\model_dm_risk.p
 MONGO_URI = "mongodb://localhost:27017/"
 mongo_client = MongoClient(MONGO_URI)
 db = mongo_client["health"]  # ฐานข้อมูลสำหรับเก็บข้อมูลโรค
-Staggers_collection = db["Staggers"]       # สำหรับเก็บข้อมูลโรคไขมันในเลือด
-Diabetes_collection = db["Diabetes"]       # สำหรับเก็บข้อมูลโรคไขมันในเลือด
-blood_fat_collection = db["blood-fat"]       # สำหรับเก็บข้อมูลโรคไขมันในเลือด
-Disease_collection = db["Disease-status"]       # สำหรับเก็บข้อมูลความมเสี่ยง
-# กำหนด collection ทั้ง 4
-user_profiles = db['user_profiles']
-diabetes_tests = db['diabetes_tests']
-food_recommendations = db['food_recommendations']
-daily_activities = db['daily_activities']
+Staggers_collection = db["Staggers"]            # สำหรับเก็บข้อมูลโรคสมอง
+Diabetes_collection = db["Diabetes"]            # สำหรับเก็บข้อมูลโรคเบาหวาน
+blood_fat_collection = db["blood-fat"]          # สำหรับเก็บข้อมูลโรคไขมันในเลือด
+Disease_collection = db["Disease-status"]       # สำหรับเก็บข้อมูลความมเสี่ยงของโรค
+user_profiles = db['user_profiles']             # สำหรับเก็บข้อมูลผู้ใช้
+
 
 LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 #myhealth
@@ -48,7 +45,7 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
 
 
-ngrok = "https://5587-223-205-178-253.ngrok-free.app"
+ngrok = "https://63b1-223-205-178-253.ngrok-free.app"
 
 #การเปรียบเทียบ
 def calculate_average(data_list):
@@ -81,7 +78,7 @@ def compare_and_visualize_diabetes_data():
 
     # ดึงข้อมูลจาก MongoDB ตาม user_id
     latest_data = Diabetes_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
-    previous_data = list(Diabetes_collection.find({"userId": user}))  # ข้อมูลก่อนหน้า (หลายชุด)
+    previous_data = list(Diabetes_collection.find({"userId": user, "timestamp": {"$lt": latest_data["timestamp"]}}, sort=[("timestamp", -1)]))  # ข้อมูลก่อนหน้า (หลายชุด)
 
     print(f"ข้อมูลล่าสุด{latest_data}")
     print(f"ข้อมูลเก่า{previous_data}")
@@ -156,13 +153,13 @@ def compare_and_visualize_blood_fat_data():
 
     # ดึงข้อมูลจาก MongoDB ตาม user_id
     latest_data = blood_fat_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
-    previous_data = list(blood_fat_collection.find({"userId": user}))  # ข้อมูลก่อนหน้า (หลายชุด)
+    previous_data = list(blood_fat_collection.find({"userId": user, "timestamp": {"$lt": latest_data["timestamp"]}}, sort=[("timestamp", -1)]))  # ข้อมูลก่อนหน้า (หลายชุด)
 
     print(f"ข้อมูลล่าสุด{latest_data}")
     print(f"ข้อมูลเก่า{previous_data}")
 
     if not latest_data or len(previous_data) == 0:
-        return "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ", None
+        return "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ", None, None, None
 
     # คำนวณค่าเฉลี่ย
     previous_avg = calculate_average(previous_data)
@@ -213,7 +210,6 @@ def compare_and_visualize_blood_fat_data():
     image_url = f"{ngrok}/{graph_path}"
 
     return user, latest_avg, previous_avg, image_url
-
 #การเปรียบเทียบโรคสมอง
 def compare_and_visualize_staggers_data():
     req = request.get_json(silent=True, force=True)
@@ -221,7 +217,7 @@ def compare_and_visualize_staggers_data():
 
     # ดึงข้อมูลจาก MongoDB ตาม user_id
     latest_data = Staggers_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
-    previous_data = list(Staggers_collection.find({"userId": user}))  # ข้อมูลก่อนหน้า (หลายชุด)
+    previous_data = list(Staggers_collection.find({"userId": user, "timestamp": {"$lt": latest_data["timestamp"]}}, sort=[("timestamp", -1)]))  # ข้อมูลก่อนหน้า (หลายชุด)
 
     print(f"ข้อมูลล่าสุด{latest_data}")
     print(f"ข้อมูลเก่า{previous_data}")
@@ -487,11 +483,6 @@ def getUser():
 
 # โหลดโมเดลและข้อมูล
 try:
-    # with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\chatbot_model.pkl", "rb") as f:
-    #     model = pickle.load(f)
-
-    # with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\vectorizer.pkl", "rb") as f:
-    #     vectorizer = pickle.load(f)
 
     with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions_answers.pkl", "rb") as f:
         data = pickle.load(f)

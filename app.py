@@ -13,6 +13,7 @@ from scipy.stats import linregress
 from flask_cors import CORS
 from matplotlib import font_manager as fm
 from datetime import datetime  # Import the datetime class
+from pythainlp.tokenize import word_tokenize
 from payload import (
     flex_predict_blood_fat,
     flex_analysis_data_blood_fat,
@@ -111,6 +112,7 @@ def generating_answer(question_from_dailogflow_raw):
     intent_name = question_from_dailogflow_dict.get("intent", {}).get("displayName", "")
     question = question_from_dailogflow_dict.get("queryText", "")
     
+    print("คำถาม:", question)  # Debugging line
 
     # ตรวจสอบค่า intent_name เพื่อเรียกใช้ฟังก์ชันที่ต้องการ 
     if intent_name == 'insertData': #เพิ่มข้อมูล
@@ -123,8 +125,10 @@ def generating_answer(question_from_dailogflow_raw):
     elif intent_name == 'compare - staggers': #เปรียบเทียบข้อมูล
         answer_str = send_comparison_result_staggers()
 
-    elif intent_name == 'getUser': #เปรียบเทียบข้อมูล
+    elif intent_name == 'getUser': #ประวัติผู็ใช้
         answer_str = getUser()
+    elif intent_name == 'get_userid': #ประวัติผู็ใช้
+        answer_str = get_userid()
     elif intent_name == 'Check - Blood_fat':  # ตรวจโรคไขมันในเลือดโดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
         answer_str = send_blood_fat()
     elif intent_name == 'Check - Diabetes':  # ตรวจโรคเบาหวาน โดยที่ไม่ต้องกรอกข้อมูล แต่เป็นการดึงข้อมูลจาก monggodb มาใช้
@@ -233,7 +237,6 @@ def send_diabetes():
             print(f"เกิดข้อผิดพลาดในการส่งข้อความ: {response.status_code}, {response.text}")
     else:
         print("ไม่มีข้อความที่ต้องส่ง")
-
 
 
 def send_Staggers():
@@ -586,6 +589,24 @@ def send_insertData():
     else:
         print(f"เกิดข้อผิดพลาดในการส่งข้อความa: {response.status_code}, {response.text}")
 
+def get_userid():
+    req = request.get_json(silent=True, force=True)
+
+    # ตรวจสอบว่ามีข้อมูลใน req และ originalDetectIntentRequest
+    if req and 'originalDetectIntentRequest' in req:
+        payload = req['originalDetectIntentRequest'].get('payload', {})
+        data = payload.get('data', {})
+        source = data.get('source', {})
+        
+        user_id = source.get('userId', "ไม่พบ User ID")
+    else:
+        user_id = "ไม่พบ User ID"
+
+    # สร้าง Custom Payload ส่งกลับไปยัง LINE
+    response = (f"📌 User ID ของคุณคือ: {user_id}")
+    
+    return response
+
 
 
 
@@ -597,7 +618,15 @@ def index():
 # Route สำหรับเพิ่มข้อมูลใน user_profiles
 @app.route('/add_user', methods=['POST'])
 def add_user():
-    userId = request.form['userId']
+    req = request.get_json(silent=True, force=True)
+    if req is None:
+        return jsonify({"error": "Invalid request"}), 400
+
+    user = req.get('originalDetectIntentRequest', {}).get('payload', {}).get('data', {}).get('source', {}).get('userId')
+    if not user:
+        return jsonify({"error": "User ID not found"}), 400
+
+    userId = user
     name = request.form['name']
     age = request.form['age']
     gender = request.form['gender']
@@ -702,7 +731,6 @@ def add_Blood_fat():
     blood_fat_collection.insert_one(test)
     return redirect('/add_blood_fat_form')
 
-
 # สร้างเส้นทางสำหรับเรียกใช้งาน
 @app.route('/add_staggers_form')
 def index3():
@@ -754,74 +782,6 @@ def add_Staggers():
     Staggers_collection.insert_one(test)
     return redirect('/add_staggers_form')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# import pickle
-# from fuzzywuzzy import process, fuzz
-# from datetime import datetime
-
-# # โหลดโมเดลและข้อมูล
-# try:
-#     with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\chatbot_model.pkl", "rb") as f:
-#         model = pickle.load(f)
-
-#     with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\vectorizer.pkl", "rb") as f:
-#         vectorizer = pickle.load(f)
-
-#     with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions_answers.pkl", "rb") as f:
-#         data = pickle.load(f)
-#         questions = data["questions"]
-#         answers = data["answers"]
-# except FileNotFoundError as e:
-#     print(f"เกิดข้อผิดพลาด: {e}")
-#     exit()
-
-# # ฟังก์ชัน Fuzzy Matching
-# def find_best_match_with_fuzzy(question, threshold=50):
-#     best_match = process.extractOne(question, questions, scorer=fuzz.partial_ratio)
-
-#     if best_match is None or best_match[1] < threshold:
-#         return "ขอโทษค่ะ ฉันไม่เข้าใจคำถาม กรุณาถามใหม่อีกครั้ง"
-
-#     best_answer = answers[questions.index(best_match[0])]
-
-#     # รับค่าปัจจุบันของวัน/เวลา
-#     now = datetime.now()
-#     today_date = now.strftime("%d/%m/%Y")
-#     today_name = now.strftime("%A")
-#     current_time = now.strftime("%H:%M:%S")
-
-#     days_th = {
-#         "Monday": "วันจันทร์",
-#         "Tuesday": "วันอังคาร",
-#         "Wednesday": "วันพุธ",
-#         "Thursday": "วันพฤหัสบดี",
-#         "Friday": "วันศุกร์",
-#         "Saturday": "วันเสาร์",
-#         "Sunday": "วันอาทิตย์"
-#     }
-
-#     # แทนค่าตัวแปรในข้อความ
-#     best_answer = best_answer.replace("{date}", today_date)
-#     best_answer = best_answer.replace("{day}", days_th.get(today_name, today_name))
-#     best_answer = best_answer.replace("{time}", current_time)
-
-#     return best_answer
 
 
 
