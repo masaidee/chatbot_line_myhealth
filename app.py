@@ -27,8 +27,9 @@ from payload import (
     flex_analysis_data_Staggers,
     flex_recommendations_Staggers,
 
-    compare_diabetes,
-    compare_img_diabetes,
+    compare,
+    compare_img,
+
     payloadinsertData
     )
 from funtion import (compare_and_visualize_diabetes_data,
@@ -435,12 +436,12 @@ def send_comparison_result_diabetes():
     
     if user:
         # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
-        predict = compare_img_diabetes(image_url)
+        predict = compare_img(image_url)
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
         # เพิ่มข้อความการวิเคราะห์ข้อมูล
-        analysis_data = compare_diabetes(key1, diff1, avg1)
+        analysis_data = compare(key1, diff1, avg1)
         if analysis_data:
             Flex_message.append(analysis_data)
 
@@ -468,7 +469,7 @@ def send_comparison_result_blood_fat():
     diff1 = []
     avg1 = []
     for key in latest_avg.keys():
-        if key == "อายุ":
+        if key == "เพศ":
             continue
         if key in previous_avg:
             diff = latest_avg[key] - previous_avg[key]
@@ -487,12 +488,12 @@ def send_comparison_result_blood_fat():
     
     if user:
         # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
-        predict = compare_img_diabetes(image_url)
+        predict = compare_img(image_url)
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
         # เพิ่มข้อความการวิเคราะห์ข้อมูล
-        analysis_data = compare_diabetes(key1, diff1, avg1)
+        analysis_data = compare(key1, diff1, avg1)
         if analysis_data:
             Flex_message.append(analysis_data)
 
@@ -518,32 +519,33 @@ def send_comparison_result_staggers():
     key1 = []
     diff1 = []
     avg1 = []
+
+    print("1111111111111111:", latest_avg)
+    print("2222222222:", previous_avg)
     for key in latest_avg.keys():
         if key == "อายุ":
             continue
         if key in previous_avg:
             diff = latest_avg[key] - previous_avg[key]
+            key1.append(key)
             if diff > 0:
-                key1.append(key)
                 diff1.append((round(diff, 1), "#00FF00"))  # ใช้รหัสสีเขียว
-                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
             elif diff < 0:
-                key1.append(key)
                 diff1.append((round(diff, 1), "#FF0000"))  # ใช้รหัสสีแดง
-                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
             else:
-                key1.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
+                diff1.append((round(diff, 1), "#000000"))  # ใช้รหัสสีดำสำหรับไม่มีการเปลี่ยนแปลง
+            avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
 
     Flex_message = []
     
     if user:
         # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
-        predict = compare_img_diabetes(image_url)
+        predict = compare_img(image_url)
         if predict:  # ตรวจสอบว่า message ถูกสร้างและไม่ว่างเปล่า
             Flex_message.append(predict)
 
         # เพิ่มข้อความการวิเคราะห์ข้อมูล
-        analysis_data = compare_diabetes(key1, diff1, avg1)
+        analysis_data = compare(key1, diff1, avg1)
         if analysis_data:
             Flex_message.append(analysis_data)
 
@@ -670,7 +672,7 @@ def add_Diabetes():
     except ValueError:
         return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
 
-    timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
     test = {
         'userId': userId,
         'age': age,
@@ -715,7 +717,7 @@ def add_Blood_fat():
     except ValueError:
         return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
 
-    timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
     test = {
         'userId': userId,
         'Gender': Gender,
@@ -764,7 +766,7 @@ def add_Staggers():
     except ValueError:
         return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
 
-    timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
+    timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
     test = {
         'userId': userId,
         'sbp': sbp,

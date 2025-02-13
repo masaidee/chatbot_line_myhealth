@@ -45,7 +45,7 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
 
 
-ngrok = "https://63b1-223-205-178-253.ngrok-free.app"
+ngrok = "https://f235-223-205-178-253.ngrok-free.app"
 
 #การเปรียบเทียบ
 def calculate_average(data_list):
@@ -114,6 +114,7 @@ def compare_and_visualize_diabetes_data():
 
     # โหลดฟอนต์ที่ระบุ
     prop = fm.FontProperties(fname=font_path)
+    prop.set_size(20)  # ตั้งค่าขนาดตัวอักษร
 
     # สร้างกราฟ
     labels = [key for key in latest_avg.keys() if key != "อายุ"]
@@ -123,20 +124,21 @@ def compare_and_visualize_diabetes_data():
     plt.figure(figsize=(8, 6))
     plt.bar(range(len(labels)), latest_values, width=0.4, label="ข้อมูลล่าสุด", color="blue")
     plt.bar([i + 0.4 for i in range(len(labels))], previous_values, width=0.4, label="ค่าเฉลี่ยก่อนหน้า", color="orange")
-    plt.xticks([i + 0.2 for i in range(len(labels))], labels, fontproperties=prop, rotation=45, ha='right')
-    plt.ylabel("ค่าเฉลี่ย", color="red", fontsize=20, fontproperties=prop)
-    plt.xlabel("ค่าของผู้ใช้", color="blue", fontsize=20, fontproperties=prop)
+    plt.xticks([i + 0.2 for i in range(len(labels))], labels, fontproperties=prop, rotation=45, ha='right', fontsize=20)
+    plt.ylabel("ค่าเฉลี่ย", color="red", fontsize=30, fontproperties=prop)
+    plt.xlabel("ค่าของผู้ใช้", color="blue", fontsize=30, fontproperties=prop)
     plt.title("เปรียบเทียบ", fontproperties=prop, fontsize=30, color="red")
     plt.legend(prop=prop)
     plt.tight_layout()
     now = datetime.now()
     # แสดงวันที่และเวลาในรูปแบบที่ต้องการ
-    formatted_time = now.strftime("%d-%m-%Y.%H-%M-%S")
+    formatted_time = now.strftime("%Y-%m-%d.%H-%M-%S")
     user_dir = os.path.join(f"static/{user}")
     os.makedirs(user_dir, exist_ok=True)  # Ensure the directory exists
     graph_path = os.path.join(f"{user_dir}/{formatted_time}.png")
     plt.savefig(graph_path)
     plt.close()
+
 
 
     print(formatted_time)
@@ -167,8 +169,11 @@ def compare_and_visualize_blood_fat_data():
 
     # แผนที่การแปลคีย์
     key_mapping = {
+        "Gender": "เพศ",
+        "Weight": "น้ำหนัก",
+        "Height": "ส่วนสูง",
         "Cholesterol": "คอเลสเตอรอล",
-        "Triglycerides": "ไตรกลีเซอไรด์",
+        "Triglycerider": "ไตรกลีเซอไรด์",
         "Hdl": "เอชดีแอล",
         "Ldl": "แอลดีแอล"
     }
@@ -182,34 +187,35 @@ def compare_and_visualize_blood_fat_data():
 
     # โหลดฟอนต์ที่ระบุ
     prop = fm.FontProperties(fname=font_path)
+    prop.set_size(20)  # ตั้งค่าขนาดตัวอักษร
 
     # สร้างกราฟ
-    labels = [key for key in latest_avg.keys()]
+    labels = [key for key in latest_avg.keys() if key != "อายุ"]
     latest_values = [latest_avg[key] for key in labels]
     previous_values = [previous_avg[key] for key in labels]
 
     plt.figure(figsize=(8, 6))
     plt.bar(range(len(labels)), latest_values, width=0.4, label="ข้อมูลล่าสุด", color="blue")
     plt.bar([i + 0.4 for i in range(len(labels))], previous_values, width=0.4, label="ค่าเฉลี่ยก่อนหน้า", color="orange")
-    plt.xticks([i + 0.2 for i in range(len(labels))], labels, fontproperties=prop, rotation=45, ha='right')
-    plt.ylabel("ค่าเฉลี่ย", color="red", fontsize=20, fontproperties=prop)
-    plt.xlabel("ค่าของผู้ใช้", color="blue", fontsize=20, fontproperties=prop)
+    plt.xticks([i + 0.2 for i in range(len(labels))], labels, fontproperties=prop, rotation=45, ha='right', fontsize=20)
+    plt.ylabel("ค่าเฉลี่ย", color="red", fontsize=30, fontproperties=prop)
+    plt.xlabel("ค่าของผู้ใช้", color="blue", fontsize=30, fontproperties=prop)
     plt.title("เปรียบเทียบ", fontproperties=prop, fontsize=30, color="red")
     plt.legend(prop=prop)
     plt.tight_layout()
     now = datetime.now()
     # แสดงวันที่และเวลาในรูปแบบที่ต้องการ
-    formatted_time = now.strftime("%d-%m-%Y.%H-%M-%S")
+    formatted_time = now.strftime("%Y-%m-%d.%H-%M-%S")
     user_dir = os.path.join(f"static/{user}")
     os.makedirs(user_dir, exist_ok=True)  # Ensure the directory exists
     graph_path = os.path.join(f"{user_dir}/{formatted_time}.png")
     plt.savefig(graph_path)
     plt.close()
 
-    print(formatted_time)
     image_url = f"{ngrok}/{graph_path}"
 
     return user, latest_avg, previous_avg, image_url
+
 #การเปรียบเทียบโรคสมอง
 def compare_and_visualize_staggers_data():
     req = request.get_json(silent=True, force=True)
@@ -252,6 +258,7 @@ def compare_and_visualize_staggers_data():
 
     # โหลดฟอนต์ที่ระบุ
     prop = fm.FontProperties(fname=font_path)
+    prop.set_size(20)  # ตั้งค่าขนาดตัวอักษร
 
     # สร้างกราฟ
     labels = [key for key in latest_avg.keys()]
@@ -261,22 +268,21 @@ def compare_and_visualize_staggers_data():
     plt.figure(figsize=(8, 6))
     plt.bar(range(len(labels)), latest_values, width=0.4, label="ข้อมูลล่าสุด", color="blue")
     plt.bar([i + 0.4 for i in range(len(labels))], previous_values, width=0.4, label="ค่าเฉลี่ยก่อนหน้า", color="orange")
-    plt.xticks([i + 0.2 for i in range(len(labels))], labels, fontproperties=prop, rotation=45, ha='right')
-    plt.ylabel("ค่าเฉลี่ย", color="red", fontsize=20, fontproperties=prop)
-    plt.xlabel("ค่าของผู้ใช้", color="blue", fontsize=20, fontproperties=prop)
+    plt.xticks([i + 0.2 for i in range(len(labels))], labels, fontproperties=prop, rotation=45, ha='right', fontsize=20)
+    plt.ylabel("ค่าเฉลี่ย", color="red", fontsize=30, fontproperties=prop)
+    plt.xlabel("ค่าของผู้ใช้", color="blue", fontsize=30, fontproperties=prop)
     plt.title("เปรียบเทียบ", fontproperties=prop, fontsize=30, color="red")
     plt.legend(prop=prop)
     plt.tight_layout()
     now = datetime.now()
     # แสดงวันที่และเวลาในรูปแบบที่ต้องการ
-    formatted_time = now.strftime("%d-%m-%Y.%H-%M-%S")
+    formatted_time = now.strftime("%Y-%m-%d.%H-%M-%S")
     user_dir = os.path.join(f"static/{user}")
     os.makedirs(user_dir, exist_ok=True)  # Ensure the directory exists
     graph_path = os.path.join(f"{user_dir}/{formatted_time}.png")
     plt.savefig(graph_path)
     plt.close()
 
-    print(formatted_time)
     image_url = f"{ngrok}/{graph_path}"
 
     return user, latest_avg, previous_avg, image_url

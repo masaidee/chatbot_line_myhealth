@@ -242,8 +242,8 @@ def flex_recommendations_Staggers(recommendations):
     }
 
 
-#เปรียบเทียบข้อมูล
-def compare_diabetes(key1, diff1, avg1):
+#เปรียบเทียบข้อมูลโรคเบาหวาน
+def compare(key1, diff1, avg1):
     key_contents = [
         {
             "type": "text",
@@ -356,7 +356,7 @@ def compare_diabetes(key1, diff1, avg1):
     #     }
     # }
 
-def compare_img_diabetes(image_url):
+def compare_img(image_url):
     return {
         "type": "flex",
         "altText": "Flex Message",
@@ -378,6 +378,8 @@ def compare_img_diabetes(image_url):
         }
     }
 
+
+#เพิ่มข้อมูล
 def payloadinsertData(URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form, URL_add_staggers_form ):
     return {
   "type": "flex",
