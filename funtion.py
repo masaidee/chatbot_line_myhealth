@@ -43,9 +43,11 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 # LINE_ACCESS_TOKEN = "1x3tE+qWFFWfG2wxF3B8iemgo4N9PSNxQ9pkXc66w+cq00iPoCgxq1XdHOVZHl+sgeWzO5TtQvYp8z/LgvUlwHrVWBCC9zp+FJrJGHeT9NoMJ9OQvpGDXAsYOuEYMRA/53Q0qkOCkRuiMa4VTENihAdB04t89/1O/w1cDnyilFU="
 #sipsinse
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
+#myhealth2
+# LINE_ACCESS_TOKEN = "+mxXTWUhft/lds9sjCQLThOE7hSpYYa3Qc9Ex8f+/7NNB6075OpjZ0jIC/83ABlncS0BObm5K+8oDnHck6sKcILblYZv9AUU8TllWdaHWHWIE8Cp9Z1ybS0jfzi5iF6hDwggWQurGYX93oAOwwr9CQdB04t89/1O/w1cDnyilFU="
+# LINE_ACCESS_TOKEN = "dlmMJIDuAnFTOrIxt1IjvGRihrCyyINAXB2QaTDGEUaikjefh2dZ7CFOk3hpBGSXNqCClqCGkeMULxN3tfC4DAYl/5c15dL1rTEhZ9AwyF7XSx2A7Cs4/pJhlQQWISwT2bWsyzxc9lxK8vDbAj8YnAdB04t89/1O/w1cDnyilFU="
 
-
-ngrok = "https://f235-223-205-178-253.ngrok-free.app"
+ngrok = "https://6212-223-205-177-229.ngrok-free.app"
 
 #การเปรียบเทียบ
 def calculate_average(data_list):
@@ -71,7 +73,7 @@ def translate_keys(data, key_mapping):
         translated_data[translated_key] = value
     return translated_data
 
-#การเปรียบเทียบโณคเบาหวาน
+#การเปรียบเทียบโรคเบาหวาน
 def compare_and_visualize_diabetes_data():
     req = request.get_json(silent=True, force=True)
     user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
@@ -80,11 +82,25 @@ def compare_and_visualize_diabetes_data():
     latest_data = Diabetes_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
     previous_data = list(Diabetes_collection.find({"userId": user, "timestamp": {"$lt": latest_data["timestamp"]}}, sort=[("timestamp", -1)]))  # ข้อมูลก่อนหน้า (หลายชุด)
 
-    print(f"ข้อมูลล่าสุด{latest_data}")
-    print(f"ข้อมูลเก่า{previous_data}")
+    print(f"ข้อมูลล่าสุด {latest_data}")
+    print(f"ข้อมูลเก่า {previous_data}")
 
     if not latest_data or len(previous_data) == 0:
-        return "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ", None
+        # ส่งข้อความแจ้งในไลน์
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
+        }
+        message = {
+            "to": user,
+            "messages": [{
+                "type": "text",
+                "text": "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ"
+            }]
+        }
+        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+        return None, None, None, None
+
 
     # คำนวณค่าเฉลี่ย
     previous_avg = calculate_average(previous_data)
@@ -108,13 +124,12 @@ def compare_and_visualize_diabetes_data():
     latest_avg = translate_keys(latest_avg, key_mapping)
     previous_avg = translate_keys(previous_avg, key_mapping)
 
-
     # ระบุเส้นทางไปยังไฟล์ฟอนต์ที่รองรับภาษาไทย
-    font_path = r"D:\masaidee\Internship\from\THSarabun\THSarabun.ttf"  # แก้ไขเส้นทางไปยังฟอนต์ไทยที่คุณใช้งาน
+    font_path = r"D:\masaidee\Internship\from\THSarabun\THSarabun.ttf"
 
     # โหลดฟอนต์ที่ระบุ
     prop = fm.FontProperties(fname=font_path)
-    prop.set_size(20)  # ตั้งค่าขนาดตัวอักษร
+    prop.set_size(20)
 
     # สร้างกราฟ
     labels = [key for key in latest_avg.keys() if key != "อายุ"]
@@ -130,8 +145,8 @@ def compare_and_visualize_diabetes_data():
     plt.title("เปรียบเทียบ", fontproperties=prop, fontsize=30, color="red")
     plt.legend(prop=prop)
     plt.tight_layout()
+
     now = datetime.now()
-    # แสดงวันที่และเวลาในรูปแบบที่ต้องการ
     formatted_time = now.strftime("%Y-%m-%d.%H-%M-%S")
     user_dir = os.path.join(f"static/{user}")
     os.makedirs(user_dir, exist_ok=True)  # Ensure the directory exists
@@ -139,14 +154,10 @@ def compare_and_visualize_diabetes_data():
     plt.savefig(graph_path)
     plt.close()
 
-
-
     print(formatted_time)
     image_url = f"{ngrok}/{graph_path}"
 
-
-    # send_comparison_result(user, comparison_result, image_url)
-    return user, latest_avg, previous_avg, image_url 
+    return user, latest_avg, previous_avg, image_url
 
 #การเปรียบเทียบโรคไขมันในเลือด
 def compare_and_visualize_blood_fat_data():
@@ -161,7 +172,20 @@ def compare_and_visualize_blood_fat_data():
     print(f"ข้อมูลเก่า{previous_data}")
 
     if not latest_data or len(previous_data) == 0:
-        return "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ", None, None, None
+        # ส่งข้อความแจ้งในไลน์
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
+        }
+        message = {
+            "to": user,
+            "messages": [{
+                "type": "text",
+                "text": "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ"
+            }]
+        }
+        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+        return None, None, None, None
 
     # คำนวณค่าเฉลี่ย
     previous_avg = calculate_average(previous_data)
@@ -229,7 +253,20 @@ def compare_and_visualize_staggers_data():
     print(f"ข้อมูลเก่า{previous_data}")
 
     if not latest_data or len(previous_data) == 0:
-        return "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ", None
+        # ส่งข้อความแจ้งในไลน์
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
+        }
+        message = {
+            "to": user,
+            "messages": [{
+                "type": "text",
+                "text": "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ"
+            }]
+        }
+        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+        return None, None, None, None
 
     # คำนวณค่าเฉลี่ย
     previous_avg = calculate_average(previous_data)
@@ -304,7 +341,20 @@ def Checkup_blood_fat():
     print("User data:", user_data_blood_fat)
     # ตรวจสอบว่าพบข้อมูลหรือไม่
     if not user_data_blood_fat:
-        return "เกิดข้อผิดพลาด: ไม่พบข้อมูลผู้ใช้ในระบบ"
+        # ส่งข้อความแจ้งในไลน์
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
+        }
+        message = {
+            "to": user,
+            "messages": [{
+                "type": "text",
+                "text": "ไม่พบข้อมูลผู้ใช้ในระบบ"
+            }]
+        }
+        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+        return None, None, None, None, None, None, None, None, None
 
     Gender = user_data_blood_fat.get("gender_str", 0)
     Weight = user_data_blood_fat.get("Weight", 0)
@@ -345,9 +395,21 @@ def Checkup_diabetes():
     user_data_diabetes = Diabetes_collection.find_one({"userId": user}, sort=[("timestamp", -1)])
     print("User data:", user_data_diabetes)
     
-    # ตรวจสอบว่าพบข้อมูลหรือไม่
     if not user_data_diabetes:
-        return "ไม่พบข้อมูลผู้ใช้ในระบบ"
+        # ส่งข้อความแจ้งในไลน์
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
+        }
+        message = {
+            "to": user,
+            "messages": [{
+                "type": "text",
+                "text": "ไม่พบข้อมูลผู้ใช้ในระบบ"
+            }]
+        }
+        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
 
     age = user_data_diabetes.get("age", 0)
     bmi = user_data_diabetes.get("bmi", 0)
@@ -397,23 +459,35 @@ def Checkup_Staggers():
     print("User:", user)
     
     # ดึงข้อมูลจาก MongoDB ตาม user_id
-    user_data_diabetes = Staggers_collection.find_one({"userId": user}, sort=[("timestamp", -1)])
-    print("User data:", user_data_diabetes)
+    user_data_staggers = Staggers_collection.find_one({"userId": user}, sort=[("timestamp", -1)])
+    print("User data:", user_data_staggers)
     
-    # ตรวจสอบว่าพบข้อมูลหรือไม่
-    if not user_data_diabetes:
-        return "ไม่พบข้อมูลผู้ใช้ในระบบ"
+    if not user_data_staggers:
+        # ส่งข้อความแจ้งในไลน์
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
+        }
+        message = {
+            "to": user,
+            "messages": [{
+                "type": "text",
+                "text": "ไม่พบข้อมูลผู้ใช้ในระบบ"
+            }]
+        }
+        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
 
-    sbp = user_data_diabetes.get("sbp", 0)
-    dbp = user_data_diabetes.get("dbp", 0)
-    his = user_data_diabetes.get("his", 0)
-    smoke = user_data_diabetes.get("smoke", 0)
-    fbs = user_data_diabetes.get("fbs", 0)
-    HbAlc = user_data_diabetes.get("HbAlc", 0)
-    total_Cholesterol = user_data_diabetes.get("total_Cholesterol", 0)
-    Exe = user_data_diabetes.get("Exe", 0)
-    bmi = user_data_diabetes.get("bmi", 0)
-    family_his = user_data_diabetes.get("family_his", 0)
+    sbp = user_data_staggers.get("sbp", 0)
+    dbp = user_data_staggers.get("dbp", 0)
+    his = user_data_staggers.get("his", 0)
+    smoke = user_data_staggers.get("smoke", 0)
+    fbs = user_data_staggers.get("fbs", 0)
+    HbAlc = user_data_staggers.get("HbAlc", 0)
+    total_Cholesterol = user_data_staggers.get("total_Cholesterol", 0)
+    Exe = user_data_staggers.get("Exe", 0)
+    bmi = user_data_staggers.get("bmi", 0)
+    family_his = user_data_staggers.get("family_his", 0)
 
     
 
@@ -490,7 +564,7 @@ def getUser():
 # โหลดโมเดลและข้อมูล
 try:
 
-    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions_answers.pkl", "rb") as f:
+    with open(r"D:\masaidee\Internship\project\chatbot_line_myhealth\questions__answers.pkl", "rb") as f:
         data = pickle.load(f)
         questions = data["questions"]
         answers = data["answers"]

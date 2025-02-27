@@ -160,7 +160,7 @@ def flex_recommendations_diabetes(recommendations):
 
 
 
-#เช็คโรคเบาหวาน
+#เช็คโรคสมอง
 def flex_predict_Staggers(reply_text, reply_text_color):
     return {
         "type": "flex",

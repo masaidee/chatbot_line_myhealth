@@ -73,6 +73,8 @@ LINE_API_URL = "https://api.line.me/v2/bot/message/push"
 # LINE_ACCESS_TOKEN = "1x3tE+qWFFWfG2wxF3B8iemgo4N9PSNxQ9pkXc66w+cq00iPoCgxq1XdHOVZHl+sgeWzO5TtQvYp8z/LgvUlwHrVWBCC9zp+FJrJGHeT9NoMJ9OQvpGDXAsYOuEYMRA/53Q0qkOCkRuiMa4VTENihAdB04t89/1O/w1cDnyilFU="
 #sipsinse
 LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8Q6JhT8ntAKAilCJQKjE/6rTfonbVRFTLkg7WL8rtzfHisWYBLbOCc6jkx6iePMA1VNJuqN/0B05f3+jq8d2nOeFnGQgdB04t89/1O/w1cDnyilFU="
+# LINE_ACCESS_TOKEN = "+mxXTWUhft/lds9sjCQLThOE7hSpYYa3Qc9Ex8f+/7NNB6075OpjZ0jIC/83ABlncS0BObm5K+8oDnHck6sKcILblYZv9AUU8TllWdaHWHWIE8Cp9Z1ybS0jfzi5iF6hDwggWQurGYX93oAOwwr9CQdB04t89/1O/w1cDnyilFU="
+# LINE_ACCESS_TOKEN = "dlmMJIDuAnFTOrIxt1IjvGRihrCyyINAXB2QaTDGEUaikjefh2dZ7CFOk3hpBGSXNqCClqCGkeMULxN3tfC4DAYl/5c15dL1rTEhZ9AwyF7XSx2A7Cs4/pJhlQQWISwT2bWsyzxc9lxK8vDbAj8YnAdB04t89/1O/w1cDnyilFU="
 
 
 def serialize_user(user):
@@ -145,6 +147,11 @@ def generating_answer(question_from_dailogflow_raw):
 def send_diabetes():
 
     user, reply_text, age, bmi, visceral, wc, ht, ht_str, sbp, dbp, fbs, HbAlc, family_his, family_his_str = Checkup_diabetes()
+    
+    if user is None:
+        return  # Exit the function if no data is found
+
+    
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -242,6 +249,11 @@ def send_diabetes():
 
 def send_Staggers():
     user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, Exe_str, bmi, family_his, family_his_str = Checkup_Staggers()
+    
+    if user is None:
+        return  # Exit the function if no data is found
+
+
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -338,6 +350,10 @@ def send_blood_fat():
 
     user, reply_text, Gender_status, Weight, Height, Cholesterol, Triglycerides, Hdl, Ldl = Checkup_blood_fat()
 
+    if user is None:
+        return  # Exit the function if no data is found
+
+
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -406,16 +422,21 @@ def send_blood_fat():
 
 def send_comparison_result_diabetes():
     user, latest_avg, previous_avg, image_url = compare_and_visualize_diabetes_data()
+
+    if user is None:
+        return  # Exit the function if no data is found
+
+
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
     }
 
+
     key1 = []
     diff1 = []
     avg1 = []
-    print(key1)
-    print(type(key1))
+
     for key in latest_avg.keys():
         if key == "อายุ":
             continue
@@ -433,7 +454,7 @@ def send_comparison_result_diabetes():
                 key1.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
 
     Flex_message = []
-    
+
     if user:
         # เพิ่มข้อความการวิเคราะห์ความเสี่ยง
         predict = compare_img(image_url)
@@ -456,10 +477,15 @@ def send_comparison_result_diabetes():
     if response.status_code == 200:
         print("ส่งข้อความสำเร็จ")
     else:
-        print(f"เกิดข้อผิดพลาดในการส่งข้อความa: {response.status_code}, {response.text}")
+        print(f"เกิดข้อผิดพลาดในการส่งข้อความ: {response.status_code}, {response.text}")
 
 def send_comparison_result_blood_fat():
     user, latest_avg, previous_avg, image_url = compare_and_visualize_blood_fat_data()
+    
+    if user is None:
+        return  # Exit the function if no data is found
+
+    
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -511,6 +537,10 @@ def send_comparison_result_blood_fat():
 
 def send_comparison_result_staggers():
     user, latest_avg, previous_avg, image_url = compare_and_visualize_staggers_data()
+    
+    if user is None:
+        return  # Exit the function if no data is found
+
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -520,8 +550,6 @@ def send_comparison_result_staggers():
     diff1 = []
     avg1 = []
 
-    print("1111111111111111:", latest_avg)
-    print("2222222222:", previous_avg)
     for key in latest_avg.keys():
         if key == "อายุ":
             continue
