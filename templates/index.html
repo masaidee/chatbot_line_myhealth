@@ -1,24 +1,15 @@
-<!DOCTYPE html>
-<html lang="en">
+<!-- <!DOCTYPE html>
+<html lang="th">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Health Data Management</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>เลือกประเภทข้อมูล</title>
 </head>
 <body>
-    <div class="container">
-        <!-- Form สำหรับ user_profiles -->
-        {% include 'add_user_form.html' %}
-
-        <!-- Form สำหรับ diabetes_tests -->
-        {% include 'add_diabetes_form.html' %}
-
-        <!-- Form สำหรับ food_recommendations -->
-        {% include 'add_food_form.html' %}
-
-        <!-- Form สำหรับ daily_activities -->
-        {% include 'add_activity_form.html' %}
-    </div>
+    <h1>บันทึกข้อมูลสุขภาพ</h1>
+    <ul>
+        <li><a href="/diabetes">บันทึกข้อมูลเบาหวาน</a></li>
+        <li><a href="/blood_fat">บันทึกข้อมูลไขมันในเลือด</a></li>
+        <li><a href="/heart_disease">บันทึกข้อมูลโรคหัวใจ</a></li>
+    </ul>
 </body>
-</html>
+</html> -->

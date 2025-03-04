@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>โรคเบาหวาน</title>
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+<script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+<div class="container">
+    <h1>บันทึกข้อมูล</h1>
+
+    <label for="age">อายุ:</label>
+    <input type="number" id="age" placeholder="อายุ">
+    <br>
+    <label for="bmi">BMI:</label>
+    <input type="number" id="bmi" placeholder="BMI">
+    <br>
+    <label for="visceral">ไขมันในช่องท้อง (Visceral Fat):</label>
+    <input type="number" id="visceral" placeholder="ค่าของไขมันในช่องท้อง">
+    <br>
+    <label for="wc">รอบเอว (WC - Waist Circumference):</label>
+    <input type="number" id="wc" placeholder="รอบเอว (cm)">
+    <br>
+    <label for="ht">โรคความดันโลหิตสูง:</label>
+    <select id="ht">
+        <option value="1">มีประวัติ</option>
+        <option value="0">ไม่มีประวัติ</option>
+    </select>
+    <br>
+    <label for="sbp">ความดันโลหิตตัวบน (SBP - Systolic Blood Pressure):</label>
+    <input type="number" id="sbp" placeholder="ค่าความดันตัวบน">
+    <br>
+    <label for="dbp">ความดันโลหิตตัวล่าง (DBP - Diastolic Blood Pressure):</label>
+    <input type="number" id="dbp" placeholder="ค่าความดันตัวล่าง">
+    <br>
+    <label for="fbs">ระดับน้ำตาลในเลือด (FBS - Fasting Blood Sugar):</label>
+    <input type="number" id="fbs" placeholder="ค่าระดับน้ำตาล">
+    <br>
+    <label for="HbAlc">ค่า HbA1c:</label>
+    <input type="number" step="0.1" id="HbAlc" placeholder="ค่า HbA1c (%)">
+    <br>
+    <label for="family_his">ประวัติครอบครัวเป็นเบาหวานหรือไม่?</label>
+    <select id="family_his">
+        <option value="1">มี</option>
+        <option value="0">ไม่มี</option>
+    </select>
+    <br>
+    <button onclick="submitData()">บันทึก</button>
+</div>
+
+<script>
+    let API_URL = window.location.origin;  // ใช้ URL ของ ngrok อัตโนมัติ
+    let userId = "";
+
+    async function initLIFF() {
+        try {
+            await liff.init({ liffId: "2003057525-1L9EGXEO" });
+
+            if (!liff.isLoggedIn()) {
+                liff.login({ redirectUri: window.location.href });  // กลับมาหน้าเดิม
+                return;
+            }
+
+            let profile = await liff.getProfile();
+            userId = profile.userId;
+
+            if (!userId) {
+                alert("เกิดข้อผิดพลาด: ไม่สามารถดึง User ID ได้");
+                return;
+            }
+
+            console.log("✅ User ID:", userId);
+        } catch (error) {
+            console.error("❌ LIFF Init Error:", error);
+            alert("เกิดข้อผิดพลาดในการโหลด LIFF");
+        }
+    }
+    
+    function validateForm(data) {
+        for (const key in data) {
+            if (!data[key] && data[key] !== 0) { // ตรวจสอบเฉพาะค่าว่าง ไม่รวม 0
+                let inputElement = document.getElementById(key);
+                let labelElement = document.querySelector(`label[for="${key}"]`);
+
+                let fieldName = labelElement ? labelElement.innerText : key; // ใช้ข้อความจาก <label>
+
+                alert(`กรุณากรอกข้อมูลให้ครบ: ${fieldName}`);
+
+                if (inputElement) {
+                    inputElement.focus(); // โฟกัสที่ช่องที่ยังไม่ได้กรอก
+                }
+
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+    async function submitData() {
+        if (!userId) {
+            alert("ไม่สามารถส่งข้อมูลได้ เนื่องจากไม่มี User ID");
+            return;
+        }
+
+
+
+        let data = {
+            user_id: userId,
+            age: parseInt(document.getElementById("age").value),
+            bmi: parseFloat(document.getElementById("bmi").value),
+            visceral: parseFloat(document.getElementById("visceral").value),
+            wc: parseFloat(document.getElementById("wc").value),
+            ht: parseInt(document.getElementById("ht").value),
+            sbp: parseInt(document.getElementById("sbp").value),
+            dbp: parseInt(document.getElementById("dbp").value),
+            fbs: parseInt(document.getElementById("fbs").value),
+            HbAlc: parseFloat(document.getElementById("HbAlc").value),
+            family_his: parseInt(document.getElementById("family_his").value)
+        };
+        // ตรวจสอบว่ากรอกข้อมูลครบหรือไม่
+        if (!validateForm(data)) return;
+
+        console.log("📤 Sending Data:", data);
+
+        try {
+            let response = await fetch(`${API_URL}/add_diabetes_data`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(data)
+            });
+
+            let result = await response.json();
+            console.log("✅ Response:", result);
+            alert(result.message);
+        } catch (error) {
+            console.error("❌ Error Sending Data:", error);
+            alert("เกิดข้อผิดพลาดในการส่งข้อมูล");
+        }
+    }
+
+    window.onload = initLIFF;
+</script>
+</body>
+</html>

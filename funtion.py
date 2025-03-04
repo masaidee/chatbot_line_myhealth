@@ -47,7 +47,7 @@ LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8
 # LINE_ACCESS_TOKEN = "+mxXTWUhft/lds9sjCQLThOE7hSpYYa3Qc9Ex8f+/7NNB6075OpjZ0jIC/83ABlncS0BObm5K+8oDnHck6sKcILblYZv9AUU8TllWdaHWHWIE8Cp9Z1ybS0jfzi5iF6hDwggWQurGYX93oAOwwr9CQdB04t89/1O/w1cDnyilFU="
 # LINE_ACCESS_TOKEN = "dlmMJIDuAnFTOrIxt1IjvGRihrCyyINAXB2QaTDGEUaikjefh2dZ7CFOk3hpBGSXNqCClqCGkeMULxN3tfC4DAYl/5c15dL1rTEhZ9AwyF7XSx2A7Cs4/pJhlQQWISwT2bWsyzxc9lxK8vDbAj8YnAdB04t89/1O/w1cDnyilFU="
 
-ngrok = "https://6212-223-205-177-229.ngrok-free.app"
+ngrok = "https://5ead-223-205-176-65.ngrok-free.app"
 
 #การเปรียบเทียบ
 def calculate_average(data_list):
@@ -531,14 +531,16 @@ def Checkup_Staggers():
 
     return user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, Exe_str, bmi, family_his, family_his_str
 
+
+life = "https://liff.line.me/2003057525-1L9EGXEO"
 #เพิ่มข้อมูล
 def insertData():
     req = request.get_json(silent=True, force=True)
     user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
-    URL_add_user_form = f"{ngrok}/add_user_form"
-    URL_add_diabetes_form = f"{ngrok}/add_diabetes_form"
-    URL_add_blood_fat_form = f"{ngrok}/add_blood_fat_form"
-    URL_add_staggers_form = f"{ngrok}/add_staggers_form"
+    URL_add_user_form = f"{life}/getUser"
+    URL_add_diabetes_form = f"{life}/diabetes"
+    URL_add_blood_fat_form = f"{life}/blood_fat"
+    URL_add_staggers_form = f"{life}/staggers"
     return user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form, URL_add_staggers_form
 
 #ดึงข้อมูลผู้ใช้

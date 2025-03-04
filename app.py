@@ -592,7 +592,9 @@ def send_comparison_result_staggers():
 def send_insertData():
     user, URL_add_user_form, URL_add_diabetes_form, URL_add_blood_fat_form, URL_add_staggers_form = insertData()
     print("User:", user)
-
+    print("URL_add_user_form:", URL_add_user_form)
+    print("URL_add_diabetes_form:", URL_add_diabetes_form)
+    print("URL_add_blood_fat_form:", URL_add_blood_fat_form)
     headers = {
         "Authorization": f"Bearer {LINE_ACCESS_TOKEN}",
         "Content-Type": "application/json"
@@ -638,179 +640,321 @@ def get_userid():
     return response
 
 
+# เสิร์ฟหน้าหลัก
+@app.route('/')
+def home():
+    return render_template('blood_fat.html')
 
+@app.route('/getUser')
+def getUser():
+    return render_template('user.html')
 
+@app.route('/diabetes')
+def diabetes():
+    return render_template('diabetes.html')
 
-# สร้างเส้นทางสำหรับเรียกใช้งาน
-@app.route('/add_user_form')
-def index():
-    return render_template('add_user_form.html')
-# Route สำหรับเพิ่มข้อมูลใน user_profiles
-@app.route('/add_user', methods=['POST'])
-def add_user():
-    req = request.get_json(silent=True, force=True)
-    if req is None:
-        return jsonify({"error": "Invalid request"}), 400
+@app.route('/blood_fat')
+def blood_fat():    
+    return render_template('blood_fat.html')
 
-    user = req.get('originalDetectIntentRequest', {}).get('payload', {}).get('data', {}).get('source', {}).get('userId')
-    if not user:
-        return jsonify({"error": "User ID not found"}), 400
+@app.route('/staggers')
+def staggers():
+    return render_template('staggers.html')
 
-    userId = user
-    name = request.form['name']
-    age = request.form['age']
-    gender = request.form['gender']
-    height = request.form['height']
-    weight = request.form['weight']
-    timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
-    user1 = {'userId': userId, 'name': name, 'age': age, 'gender': gender, 'height': height, 'weight': weight, 'timestamp': timestamp}
-    user_profiles.insert_one(user1)
-    return redirect('/add_user_form')
-
-# สร้างเส้นทางสำหรับเรียกใช้งาน
-@app.route('/add_diabetes_form')
-def index1():
-    return render_template('add_diabetes_form.html')
-# Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
-@app.route('/add_Diabetes', methods=['POST'])
-def add_Diabetes():
-    userId = request.form['userId']
-    age = request.form['age']
-    bmi = request.form['bmi']
-    visceral = request.form['visceral']
-    wc = request.form['wc']
-    ht = request.form['ht']
-    sbp = request.form['sbp']
-    dbp = request.form['dbp']
-    fbs = request.form['fbs']
-    HbAlc = request.form['HbAlc']
-    family_his = request.form['family_his']
-
-    try:
-        age = float(age)
-        bmi = float(bmi)
-        visceral = float(visceral)
-        wc = float(wc)
-        ht = int(ht)
-        sbp = float(sbp)
-        dbp = float(dbp)
-        fbs = float(fbs)
-        HbAlc = float(HbAlc)
-        family_his = int(family_his)
-    except ValueError:
-        return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
-
+# API สำหรับรับข้อมูลจาก LIFF
+@app.route('/add_getUser_data', methods=['POST'])
+def add_getUser_data():
+    data = request.json
+    user_id = data.get("user_id")  
+    name = data.get("name")
+    age = data.get("age")
+    gender = data.get("gender")
+    height = data.get("height")
+    weight = data.get("weight")
     timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
-    test = {
-        'userId': userId,
-        'age': age,
-        'bmi': bmi,
-        'visceral': visceral,
-        'wc': wc,
-        'ht': ht,
-        'sbp': sbp,
-        'dbp': dbp,
-        'fbs': fbs,
-        'HbAlc': HbAlc,
-        'family_his': family_his,
-        'timestamp': timestamp
-    }
-    Diabetes_collection.insert_one(test)
-    return redirect('/add_diabetes_form')
 
-# สร้างเส้นทางสำหรับเรียกใช้งาน
-@app.route('/add_blood_fat_form')
-def index2():
-    return render_template('add_blood-fat_form.html')
-# Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
-@app.route('/add_Blood_fat', methods=['POST'])
-def add_Blood_fat():
-    userId = request.form['userId']
-    Gender = request.form['Gender']
-    Weight = request.form['Weight']
-    Height = request.form['Height']
-    Cholesterol = request.form['Cholesterol']
-    Triglycerider = request.form['Triglycerider']
-    Hdl = request.form['Hdl']
-    Ldl = request.form['Ldl']
+    # บันทึกลง MongoDB
+    user_profiles.insert_one({
+        "userId": user_id,
+        "gender":gender,
+        "name": name,
+        "age": age,
+        "height": height,
+        "weight": weight,
+        "timestamp": timestamp
+    })
 
-    try:
-        Gender = int(Gender)
-        Weight = float(Weight)
-        Height = float(Height)
-        Cholesterol = float(Cholesterol)
-        Triglycerider = float(Triglycerider)
-        Hdl = float(Hdl)
-        Ldl = float(Ldl)
-    except ValueError:
-        return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
+    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ'})
 
+@app.route('/add_diabetes_data', methods=['POST'])
+def add_diabetes_data():
+    data = request.json
+    user_id = data.get("user_id")  
+    age = data.get("age")
+    bmi = data.get("bmi")
+    visceral = data.get("visceral")
+    wc = data.get("wc")
+    ht = int(data.get("ht"))
+    sbp = data.get("sbp")
+    dbp = data.get("dbp")
+    fbs = data.get("fbs")
+    HbAlc = data.get("HbAlc")
+    family_his = int(data.get("family_his"))
     timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
-    test = {
-        'userId': userId,
-        'Gender': Gender,
-        'Weight': Weight,
-        'Height': Height,
-        'Cholesterol': Cholesterol,
-        'Triglycerider': Triglycerider,
-        'Hdl': Hdl,
-        'Ldl': Ldl,
-        'timestamp': timestamp
 
-    }
-    blood_fat_collection.insert_one(test)
-    return redirect('/add_blood_fat_form')
+    # บันทึกลง MongoDB
+    Diabetes_collection.insert_one({
+        "userId": user_id,
+        "age": age,
+        "bmi": bmi,
+        "visceral": visceral,
+        "wc": wc,
+        "ht": ht,
+        "sbp": sbp,
+        "dbp": dbp,
+        "fbs": fbs,
+        "HbAlc": HbAlc,
+        "family_his": family_his,
+        "timestamp": timestamp
+    })
 
-# สร้างเส้นทางสำหรับเรียกใช้งาน
-@app.route('/add_staggers_form')
-def index3():
-    return render_template('add_staggers_form.html')
-# Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
-@app.route('/add_Staggers', methods=['POST'])
-def add_Staggers():
-    userId = request.form['userId']
-    sbp = request.form['sbp']
-    dbp = request.form['dbp']
-    his = request.form['his']
-    smoke = request.form['smoke']
-    fbs = request.form['fbs']
-    HbAlc = request.form['HbAlc']
-    total_Cholesterol = request.form['total_Cholesterol']
-    Exe = request.form['Exe']
-    bmi = request.form['bmi']
-    family_his = request.form['family_his']
+    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ'})
 
-    try:
-        sbp = float(sbp)
-        dbp = float(dbp)
-        his = int(his)
-        smoke = int(smoke)
-        fbs = float(fbs)
-        HbAlc = float(HbAlc)
-        total_Cholesterol = float(total_Cholesterol)
-        Exe = float(Exe)
-        bmi = float(bmi)
-        family_his = int(family_his)
-    except ValueError:
-        return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
-
+@app.route('/add_blood_fat_data', methods=['POST'])
+def add_blood_fat_data():
+    data = request.json
+    user_id = data.get("user_id")  
+    gender = data.get("gender")
+    weight = data.get("weight")
+    height = data.get("height")
+    cholesterol = data.get("cholesterol")
+    triglycerides = data.get("triglycerides")
+    hdl = data.get("hdl")
+    ldl = data.get("ldl")
     timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
-    test = {
-        'userId': userId,
-        'sbp': sbp,
-        'dbp': dbp,
-        'his': his,
-        'smoke': smoke,
-        'fbs': fbs,
-        'HbAlc': HbAlc,
-        'total_Cholesterol': total_Cholesterol,
-        'Exe': Exe,
-        'bmi': bmi,
-        'family_his': family_his,
-        'timestamp': timestamp
-    }
-    Staggers_collection.insert_one(test)
-    return redirect('/add_staggers_form')
+
+
+    # บันทึกลง MongoDB
+    blood_fat_collection.insert_one({
+        "userId": user_id,
+        "gender":gender,
+        "weight": weight,
+        "height": height,
+        "cholesterol": cholesterol,
+        "triglycerides": triglycerides,
+        "hdl": hdl,
+        "ldl": ldl,
+        "timestamp": timestamp
+
+    })
+
+    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ'})
+
+@app.route('/add_staggers_data', methods=['POST'])
+def add_staggers_data():
+    data = request.json
+    user_id = data.get("user_id")  
+    sbp = data.get("sbp")
+    dbp = data.get("dbp")
+    his = int(data.get("his"))
+    smoke = int(data.get("smoke"))
+    fbs = data.get("fbs")
+    HbAlc = data.get("HbAlc")
+    total_Cholesterol = data.get("total_Cholesterol")
+    Exe = int(data.get("Exe"))
+    bmi = data.get("bmi")
+    family_his = int(data.get("family_his"))
+    timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
+    # บันทึกลง MongoDB
+    Staggers_collection.insert_one({
+        "userId": user_id,
+        "sbp": sbp,
+        "dbp": dbp,
+        "his": his,
+        "smoke": smoke,
+        "fbs": fbs,
+        "HbAlc": HbAlc,
+        "total_Cholesterol": total_Cholesterol,
+        "Exe": Exe,
+        "bmi": bmi,
+        "family_his": family_his,
+        "timestamp": timestamp
+    })
+
+    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ'})
+
+
+
+# # สร้างเส้นทางสำหรับเรียกใช้งาน
+# @app.route('/add_user_form')
+# def index():
+#     return render_template('add_user_form.html')
+# # Route สำหรับเพิ่มข้อมูลใน user_profiles
+# @app.route('/add_user', methods=['POST'])
+# def add_user():
+#     req = request.get_json(silent=True, force=True)
+#     if req is None:
+#         return jsonify({"error": "Invalid request"}), 400
+
+#     user = req.get('originalDetectIntentRequest', {}).get('payload', {}).get('data', {}).get('source', {}).get('userId')
+#     if not user:
+#         return jsonify({"error": "User ID not found"}), 400
+
+#     userId = user
+#     name = request.form['name']
+#     age = request.form['age']
+#     gender = request.form['gender']
+#     height = request.form['height']
+#     weight = request.form['weight']
+#     timestamp = datetime.now().strftime("%d-%m-%Y.%H-%M-%S")
+#     user1 = {'userId': userId, 'name': name, 'age': age, 'gender': gender, 'height': height, 'weight': weight, 'timestamp': timestamp}
+#     user_profiles.insert_one(user1)
+#     return redirect('/add_user_form')
+
+# # สร้างเส้นทางสำหรับเรียกใช้งาน
+# @app.route('/add_diabetes_form')
+# def index1():
+#     return render_template('add_diabetes_form.html')
+# # Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
+# @app.route('/add_Diabetes', methods=['POST'])
+# def add_Diabetes():
+#     userId = request.form['userId']
+#     age = request.form['age']
+#     bmi = request.form['bmi']
+#     visceral = request.form['visceral']
+#     wc = request.form['wc']
+#     ht = request.form['ht']
+#     sbp = request.form['sbp']
+#     dbp = request.form['dbp']
+#     fbs = request.form['fbs']
+#     HbAlc = request.form['HbAlc']
+#     family_his = request.form['family_his']
+
+#     try:
+#         age = float(age)
+#         bmi = float(bmi)
+#         visceral = float(visceral)
+#         wc = float(wc)
+#         ht = int(ht)
+#         sbp = float(sbp)
+#         dbp = float(dbp)
+#         fbs = float(fbs)
+#         HbAlc = float(HbAlc)
+#         family_his = int(family_his)
+#     except ValueError:
+#         return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
+
+#     timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
+#     test = {
+#         'userId': userId,
+#         'age': age,
+#         'bmi': bmi,
+#         'visceral': visceral,
+#         'wc': wc,
+#         'ht': ht,
+#         'sbp': sbp,
+#         'dbp': dbp,
+#         'fbs': fbs,
+#         'HbAlc': HbAlc,
+#         'family_his': family_his,
+#         'timestamp': timestamp
+#     }
+#     Diabetes_collection.insert_one(test)
+#     return redirect('/add_diabetes_form')
+
+# # สร้างเส้นทางสำหรับเรียกใช้งาน
+# @app.route('/add_blood_fat_form')
+# def index2():
+#     return render_template('add_blood-fat_form.html')
+# # Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
+# @app.route('/add_Blood_fat', methods=['POST'])
+# def add_Blood_fat():
+#     userId = request.form['userId']
+#     Gender = request.form['Gender']
+#     Weight = request.form['Weight']
+#     Height = request.form['Height']
+#     Cholesterol = request.form['Cholesterol']
+#     Triglycerider = request.form['Triglycerider']
+#     Hdl = request.form['Hdl']
+#     Ldl = request.form['Ldl']
+
+#     try:
+#         Gender = int(Gender)
+#         Weight = float(Weight)
+#         Height = float(Height)
+#         Cholesterol = float(Cholesterol)
+#         Triglycerider = float(Triglycerider)
+#         Hdl = float(Hdl)
+#         Ldl = float(Ldl)
+#     except ValueError:
+#         return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
+
+#     timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
+#     test = {
+#         'userId': userId,
+#         'Gender': Gender,
+#         'Weight': Weight,
+#         'Height': Height,
+#         'Cholesterol': Cholesterol,
+#         'Triglycerider': Triglycerider,
+#         'Hdl': Hdl,
+#         'Ldl': Ldl,
+#         'timestamp': timestamp
+
+#     }
+#     blood_fat_collection.insert_one(test)
+#     return redirect('/add_blood_fat_form')
+
+# # สร้างเส้นทางสำหรับเรียกใช้งาน
+# @app.route('/add_staggers_form')
+# def index3():
+#     return render_template('add_staggers_form.html')
+# # Route สำหรับเพิ่มข้อมูลใน Diabetes_collection
+# @app.route('/add_Staggers', methods=['POST'])
+# def add_Staggers():
+#     userId = request.form['userId']
+#     sbp = request.form['sbp']
+#     dbp = request.form['dbp']
+#     his = request.form['his']
+#     smoke = request.form['smoke']
+#     fbs = request.form['fbs']
+#     HbAlc = request.form['HbAlc']
+#     total_Cholesterol = request.form['total_Cholesterol']
+#     Exe = request.form['Exe']
+#     bmi = request.form['bmi']
+#     family_his = request.form['family_his']
+
+#     try:
+#         sbp = float(sbp)
+#         dbp = float(dbp)
+#         his = int(his)
+#         smoke = int(smoke)
+#         fbs = float(fbs)
+#         HbAlc = float(HbAlc)
+#         total_Cholesterol = float(total_Cholesterol)
+#         Exe = float(Exe)
+#         bmi = float(bmi)
+#         family_his = int(family_his)
+#     except ValueError:
+#         return jsonify({"error": "Invalid input value"}), 400  # ส่งข้อความแสดงข้อผิดพลาดกลับไปยังผู้ใช้
+
+#     timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
+#     test = {
+#         'userId': userId,
+#         'sbp': sbp,
+#         'dbp': dbp,
+#         'his': his,
+#         'smoke': smoke,
+#         'fbs': fbs,
+#         'HbAlc': HbAlc,
+#         'total_Cholesterol': total_Cholesterol,
+#         'Exe': Exe,
+#         'bmi': bmi,
+#         'family_his': family_his,
+#         'timestamp': timestamp
+#     }
+#     Staggers_collection.insert_one(test)
+#     return redirect('/add_staggers_form')
 
 
 
