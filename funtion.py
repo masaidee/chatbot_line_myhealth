@@ -47,7 +47,7 @@ LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8
 # LINE_ACCESS_TOKEN = "+mxXTWUhft/lds9sjCQLThOE7hSpYYa3Qc9Ex8f+/7NNB6075OpjZ0jIC/83ABlncS0BObm5K+8oDnHck6sKcILblYZv9AUU8TllWdaHWHWIE8Cp9Z1ybS0jfzi5iF6hDwggWQurGYX93oAOwwr9CQdB04t89/1O/w1cDnyilFU="
 # LINE_ACCESS_TOKEN = "dlmMJIDuAnFTOrIxt1IjvGRihrCyyINAXB2QaTDGEUaikjefh2dZ7CFOk3hpBGSXNqCClqCGkeMULxN3tfC4DAYl/5c15dL1rTEhZ9AwyF7XSx2A7Cs4/pJhlQQWISwT2bWsyzxc9lxK8vDbAj8YnAdB04t89/1O/w1cDnyilFU="
 
-ngrok = "https://5ead-223-205-176-65.ngrok-free.app"
+ngrok = "https://a69c-223-205-176-129.ngrok-free.app"
 
 #การเปรียบเทียบ
 def calculate_average(data_list):
@@ -73,32 +73,51 @@ def translate_keys(data, key_mapping):
         translated_data[translated_key] = value
     return translated_data
 
+def send_line_message(user, text):
+    """ ฟังก์ชันส่งข้อความแจ้งเตือนกลับไปที่ LINE """
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
+    }
+    message = {
+        "to": user,
+        "messages": [{
+            "type": "text",
+            "text": text
+        }]
+    }
+    requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+
 #การเปรียบเทียบโรคเบาหวาน
 def compare_and_visualize_diabetes_data():
     req = request.get_json(silent=True, force=True)
-    user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+
+    # ตรวจสอบว่า req มีข้อมูลและมี userId หรือไม่
+    try:
+        user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+    except (KeyError, TypeError):
+        print("❌ ไม่สามารถดึง userId จาก request ได้")
+        return None, None, None, None
 
     # ดึงข้อมูลจาก MongoDB ตาม user_id
-    latest_data = Diabetes_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
-    previous_data = list(Diabetes_collection.find({"userId": user, "timestamp": {"$lt": latest_data["timestamp"]}}, sort=[("timestamp", -1)]))  # ข้อมูลก่อนหน้า (หลายชุด)
+    latest_data = Diabetes_collection.find_one({"userId": user}, sort=[("timestamp", -1)])
 
-    print(f"ข้อมูลล่าสุด {latest_data}")
-    print(f"ข้อมูลเก่า {previous_data}")
+    if not latest_data:
+        print(f"❌ ไม่พบข้อมูลล่าสุดของ user: {user}")
+        send_line_message(user, "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ")
+        return None, None, None, None
 
-    if not latest_data or len(previous_data) == 0:
-        # ส่งข้อความแจ้งในไลน์
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
-        }
-        message = {
-            "to": user,
-            "messages": [{
-                "type": "text",
-                "text": "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ"
-            }]
-        }
-        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+    previous_data = list(Diabetes_collection.find(
+        {"userId": user, "timestamp": {"$lt": latest_data['timestamp']}},
+        sort=[("timestamp", -1)]
+    ))
+
+    print(f"✅ ข้อมูลล่าสุด: {latest_data}")
+    print(f"📌 ข้อมูลเก่า: {previous_data}")
+
+    if not previous_data:
+        print(f"⚠ ไม่มีข้อมูลก่อนหน้าเพื่อเปรียบเทียบสำหรับ user: {user}")
+        send_line_message(user, "ไม่มีข้อมูลเก่าเพื่อใช้ในการเปรียบเทียบ")
         return None, None, None, None
 
 
@@ -162,29 +181,32 @@ def compare_and_visualize_diabetes_data():
 #การเปรียบเทียบโรคไขมันในเลือด
 def compare_and_visualize_blood_fat_data():
     req = request.get_json(silent=True, force=True)
-    user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+    # ตรวจสอบว่า req มีข้อมูลและมี userId หรือไม่
+    try:
+        user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+    except (KeyError, TypeError):
+        print("❌ ไม่สามารถดึง userId จาก request ได้")
+        return None, None, None, None
 
     # ดึงข้อมูลจาก MongoDB ตาม user_id
-    latest_data = blood_fat_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
-    previous_data = list(blood_fat_collection.find({"userId": user, "timestamp": {"$lt": latest_data["timestamp"]}}, sort=[("timestamp", -1)]))  # ข้อมูลก่อนหน้า (หลายชุด)
+    latest_data = blood_fat_collection.find_one({"userId": user}, sort=[("timestamp", -1)])
 
-    print(f"ข้อมูลล่าสุด{latest_data}")
-    print(f"ข้อมูลเก่า{previous_data}")
+    if not latest_data:
+        print(f"❌ ไม่พบข้อมูลล่าสุดของ user: {user}")
+        send_line_message(user, "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ")
+        return None, None, None, None
 
-    if not latest_data or len(previous_data) == 0:
-        # ส่งข้อความแจ้งในไลน์
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
-        }
-        message = {
-            "to": user,
-            "messages": [{
-                "type": "text",
-                "text": "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ"
-            }]
-        }
-        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+    previous_data = list(blood_fat_collection.find(
+        {"userId": user, "timestamp": {"$lt": latest_data['timestamp']}},
+        sort=[("timestamp", -1)]
+    ))
+
+    print(f"✅ ข้อมูลล่าสุด: {latest_data}")
+    print(f"📌 ข้อมูลเก่า: {previous_data}")
+
+    if not previous_data:
+        print(f"⚠ ไม่มีข้อมูลก่อนหน้าเพื่อเปรียบเทียบสำหรับ user: {user}")
+        send_line_message(user, "ไม่มีข้อมูลเก่าเพื่อใช้ในการเปรียบเทียบ")
         return None, None, None, None
 
     # คำนวณค่าเฉลี่ย
@@ -243,29 +265,32 @@ def compare_and_visualize_blood_fat_data():
 #การเปรียบเทียบโรคสมอง
 def compare_and_visualize_staggers_data():
     req = request.get_json(silent=True, force=True)
-    user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+    # ตรวจสอบว่า req มีข้อมูลและมี userId หรือไม่
+    try:
+        user = req['originalDetectIntentRequest']['payload']['data']['source']['userId']
+    except (KeyError, TypeError):
+        print("❌ ไม่สามารถดึง userId จาก request ได้")
+        return None, None, None, None
 
     # ดึงข้อมูลจาก MongoDB ตาม user_id
-    latest_data = Staggers_collection.find_one({"userId": user}, sort=[("timestamp", -1)])  # ข้อมูลล่าสุด
-    previous_data = list(Staggers_collection.find({"userId": user, "timestamp": {"$lt": latest_data["timestamp"]}}, sort=[("timestamp", -1)]))  # ข้อมูลก่อนหน้า (หลายชุด)
+    latest_data = Staggers_collection.find_one({"userId": user}, sort=[("timestamp", -1)])
 
-    print(f"ข้อมูลล่าสุด{latest_data}")
-    print(f"ข้อมูลเก่า{previous_data}")
+    if not latest_data:
+        print(f"❌ ไม่พบข้อมูลล่าสุดของ user: {user}")
+        send_line_message(user, "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ")
+        return None, None, None, None
 
-    if not latest_data or len(previous_data) == 0:
-        # ส่งข้อความแจ้งในไลน์
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
-        }
-        message = {
-            "to": user,
-            "messages": [{
-                "type": "text",
-                "text": "ไม่พบข้อมูลที่ต้องการเปรียบเทียบ"
-            }]
-        }
-        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+    previous_data = list(Staggers_collection.find(
+        {"userId": user, "timestamp": {"$lt": latest_data['timestamp']}},
+        sort=[("timestamp", -1)]
+    ))
+
+    print(f"✅ ข้อมูลล่าสุด: {latest_data}")
+    print(f"📌 ข้อมูลเก่า: {previous_data}")
+
+    if not previous_data:
+        print(f"⚠ ไม่มีข้อมูลก่อนหน้าเพื่อเปรียบเทียบสำหรับ user: {user}")
+        send_line_message(user, "ไม่มีข้อมูลเก่าเพื่อใช้ในการเปรียบเทียบ")
         return None, None, None, None
 
     # คำนวณค่าเฉลี่ย
@@ -341,19 +366,7 @@ def Checkup_blood_fat():
     print("User data:", user_data_blood_fat)
     # ตรวจสอบว่าพบข้อมูลหรือไม่
     if not user_data_blood_fat:
-        # ส่งข้อความแจ้งในไลน์
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
-        }
-        message = {
-            "to": user,
-            "messages": [{
-                "type": "text",
-                "text": "ไม่พบข้อมูลผู้ใช้ในระบบ"
-            }]
-        }
-        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
+        send_line_message(user, "ไม่พบข้อมูลโรคไขมันในเลือดของคุณในระบบ กรุณาเพิ่มข้อมูลโรคไขมันในเลือดก่อนครับ")
         return None, None, None, None, None, None, None, None, None
 
     Gender = user_data_blood_fat.get("gender_str", 0)
@@ -396,20 +409,8 @@ def Checkup_diabetes():
     print("User data:", user_data_diabetes)
     
     if not user_data_diabetes:
-        # ส่งข้อความแจ้งในไลน์
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
-        }
-        message = {
-            "to": user,
-            "messages": [{
-                "type": "text",
-                "text": "ไม่พบข้อมูลผู้ใช้ในระบบ"
-            }]
-        }
-        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
-        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
+        send_line_message(user, "ไม่พบข้อมูลโรคเบาหวานของคุณในระบบ กรุณาเพิ่มข้อมูลโรคเบาหวานก่อนครับ")
+        return None, None, None, None, None, None, None, None, None, None, None, None, None, None
 
     age = user_data_diabetes.get("age", 0)
     bmi = user_data_diabetes.get("bmi", 0)
@@ -463,20 +464,8 @@ def Checkup_Staggers():
     print("User data:", user_data_staggers)
     
     if not user_data_staggers:
-        # ส่งข้อความแจ้งในไลน์
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
-        }
-        message = {
-            "to": user,
-            "messages": [{
-                "type": "text",
-                "text": "ไม่พบข้อมูลผู้ใช้ในระบบ"
-            }]
-        }
-        requests.post(LINE_API_URL, headers=headers, data=json.dumps(message))
-        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
+        send_line_message(user, "ไม่พบข้อมูลโรคสมองของคุณในระบบ กรุณาเพิ่มข้อมูลโรคสมองก่อนครับ")
+        return None, None, None, None, None, None, None, None, None, None, None, None, None, None, None, None
 
     sbp = user_data_staggers.get("sbp", 0)
     dbp = user_data_staggers.get("dbp", 0)

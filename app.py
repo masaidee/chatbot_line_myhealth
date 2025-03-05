@@ -423,7 +423,7 @@ def send_blood_fat():
 def send_comparison_result_diabetes():
     user, latest_avg, previous_avg, image_url = compare_and_visualize_diabetes_data()
 
-    if user is None:
+    if user is None : 
         return  # Exit the function if no data is found
 
 
@@ -451,7 +451,9 @@ def send_comparison_result_diabetes():
                 diff1.append((round(diff, 1), "#FF0000"))  # ใช้รหัสสีแดง
                 avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
             else:
-                key1.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
+                key1.append(key)
+                diff1.append((round(diff, 1), "#000000"))  # ใช้รหัสสีดำสำหรับไม่มีการเปลี่ยนแปลง
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
 
     Flex_message = []
 
@@ -508,7 +510,9 @@ def send_comparison_result_blood_fat():
                 diff1.append((round(diff, 1), "#FF0000"))  # ใช้รหัสสีแดง
                 avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
             else:
-                key1.append(f"{key}: ไม่มีการเปลี่ยนแปลง")
+                key1.append(key)
+                diff1.append((round(diff, 1), "#000000"))  # ใช้รหัสสีดำสำหรับไม่มีการเปลี่ยนแปลง
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
 
     Flex_message = []
     
@@ -555,14 +559,18 @@ def send_comparison_result_staggers():
             continue
         if key in previous_avg:
             diff = latest_avg[key] - previous_avg[key]
-            key1.append(key)
             if diff > 0:
+                key1.append(key)
                 diff1.append((round(diff, 1), "#00FF00"))  # ใช้รหัสสีเขียว
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
             elif diff < 0:
+                key1.append(key)
                 diff1.append((round(diff, 1), "#FF0000"))  # ใช้รหัสสีแดง
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
             else:
+                key1.append(key)
                 diff1.append((round(diff, 1), "#000000"))  # ใช้รหัสสีดำสำหรับไม่มีการเปลี่ยนแปลง
-            avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
+                avg1.append(f"({round(previous_avg[key], 1)} -> {round(latest_avg[key], 1)})")
 
     Flex_message = []
     
@@ -677,7 +685,8 @@ def staggers():
 @app.route('/add_getUser_data', methods=['POST'])
 def add_getUser_data():
     data = request.json
-    user_id = data.get("user_id")  
+    user_id = data.get("user_id") 
+    displayName = data.get("displayName") 
     name = data.get("name")
     age = data.get("age")
     gender = data.get("gender")
@@ -688,6 +697,7 @@ def add_getUser_data():
     # บันทึกลง MongoDB
     user_profiles.insert_one({
         "userId": user_id,
+        "displayName": displayName,
         "gender":gender,
         "name": name,
         "age": age,
@@ -705,7 +715,7 @@ def add_getUser_data():
         # สร้างข้อความแจ้งเตือน
     message = (
 
-        f"📌 ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
+        f"📌 ข้อมูลส่วนตัวของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
         f"  ชื่อ: {name}\n"
         f"  อายุ: {age} ปี\n"
         f"  เพศ: {g}\n"
@@ -767,7 +777,7 @@ def add_diabetes_data():
         # สร้างข้อความแจ้งเตือน
     message = (
 
-        f"📌 ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
+        f"📌 ข้อมูลโรคเบาหวานของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
         f"  อายุ: {age} ปี\n"
         f"  ดัชนีมวลกาย: {bmi} kg\n"
         f"  ไขมันในช่องท้อง: {visceral} cm\n"
@@ -823,7 +833,7 @@ def add_blood_fat_data():
         # สร้างข้อความแจ้งเตือน
     message = (
 
-        f"📌 ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
+        f"📌 ข้อมูลโรคไขมันในเลือดของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
         f"  เพศ: {g}\n"
         f"  น้ำหนัก: {weight} kg\n"
         f"  ส่วนสูง: {height} cm\n"
@@ -905,7 +915,7 @@ def add_staggers_data():
     # สร้างข้อความแจ้งเตือน
     message = (
 
-        f"📌 ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
+        f"📌 ข้อมูลโรคสมองของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
         f"  ความดันโลหิต: {sbp}/{dbp} mmHg\n"
         f"  ประวัติการรักษา: {h}\n"
         f"  การสูบบุหรี่: {s}\n"

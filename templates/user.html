@@ -42,6 +42,7 @@
 <script>
     let API_URL = window.location.origin;  // ใช้ URL ของ ngrok อัตโนมัติ
     let userId = "";
+    let displayName = ""; // ✅ เพิ่มตัวแปร displayName ที่นี่
 
     async function initLIFF() {
         try {
@@ -54,6 +55,7 @@
 
             let profile = await liff.getProfile();
             userId = profile.userId;
+            displayName = profile.displayName;
 
             if (!userId) {
                 alert("เกิดข้อผิดพลาด: ไม่สามารถดึง User ID ได้");
@@ -96,6 +98,7 @@
 
         let data = {
             user_id: userId,
+            displayName:displayName,
             name: document.getElementById("name").value.trim(),
             age: parseInt(document.getElementById("age").value),
             gender: parseInt(document.getElementById("gender").value),
