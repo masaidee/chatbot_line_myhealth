@@ -639,6 +639,18 @@ def get_userid():
     
     return response
 
+def send_line_message(user_id, message):
+    url = "https://api.line.me/v2/bot/message/push"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {LINE_ACCESS_TOKEN}"
+    }
+    payload = {
+        "to": user_id,  # LINE User ID
+        "messages": [{"type": "text", "text": message}]
+    }
+    response = requests.post(url, json=payload, headers=headers)
+    return response.json()
 
 # เสิร์ฟหน้าหลัก
 @app.route('/')
@@ -684,7 +696,28 @@ def add_getUser_data():
         "timestamp": timestamp
     })
 
-    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ'})
+    g = []
+
+    if gender == "1":
+        g = "ชาย"
+    else:
+        g = "หญิง"
+        # สร้างข้อความแจ้งเตือน
+    message = (
+
+        f"📌 ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
+        f"  ชื่อ: {name}\n"
+        f"  อายุ: {age} ปี\n"
+        f"  เพศ: {g}\n"
+        f"  ส่วนสูง: {height} cm\n"
+        f"  น้ำหนัก: {weight} kg\n"
+        f"  เวลาที่บันทึก: {timestamp}"
+    )
+
+    # ส่งข้อความไปยัง LINE
+    response = send_line_message(user_id, message)
+
+    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ', 'line_response': response})
 
 @app.route('/add_diabetes_data', methods=['POST'])
 def add_diabetes_data():
@@ -718,7 +751,39 @@ def add_diabetes_data():
         "timestamp": timestamp
     })
 
-    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ'})
+    h = []
+
+    if ht == "1":
+        h = "มีประวัติ"
+    else:
+        h = "ไม่มีประวัติ"
+
+    f = []
+
+    if family_his == "1":
+        f = "มีประวัติ"
+    else:
+        f = "ไม่มีประวัติ"
+        # สร้างข้อความแจ้งเตือน
+    message = (
+
+        f"📌 ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
+        f"  อายุ: {age} ปี\n"
+        f"  ดัชนีมวลกาย: {bmi} kg\n"
+        f"  ไขมันในช่องท้อง: {visceral} cm\n"
+        f"  เส้นรอบเอว: {wc} cm\n"
+        f"  โรคความดันโลหิตสูง: {h}\n"
+        f"  ความดันโลหิต: {sbp}/{dbp} mmHg\n"
+        f"  ระดับน้ำตาลในเลือด: {fbs} mg/dL\n"
+        f"  ระดับ HbA1c: {HbAlc} %\n"
+        f"  ประวัติครอบครัวเป็นเบาหวาน: {f}\n"
+        f"  เวลาที่บันทึก: {timestamp}"
+    )
+
+    # ส่งข้อความไปยัง LINE
+    response = send_line_message(user_id, message)
+
+    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ', 'line_response': response})
 
 @app.route('/add_blood_fat_data', methods=['POST'])
 def add_blood_fat_data():
@@ -748,7 +813,31 @@ def add_blood_fat_data():
 
     })
 
-    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ'})
+    g = []
+
+    if gender == "1":
+        g = "ชาย"
+    else:
+        g = "หญิง"
+
+        # สร้างข้อความแจ้งเตือน
+    message = (
+
+        f"📌 ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
+        f"  เพศ: {g}\n"
+        f"  น้ำหนัก: {weight} kg\n"
+        f"  ส่วนสูง: {height} cm\n"
+        f"  คอเลสเตอรอล: {cholesterol} mg/dL\n"
+        f"  ไตรกลเซรีด: {triglycerides} mg/dL\n"
+        f"  HDL: {hdl} mg/dL\n"
+        f"  LDL: {ldl} mg/dL\n"
+        f"  เวลาที่บันทึก: {timestamp}"
+    )
+
+    # ส่งข้อความไปยัง LINE
+    response = send_line_message(user_id, message)
+
+    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ', 'line_response': response})
 
 @app.route('/add_staggers_data', methods=['POST'])
 def add_staggers_data():
@@ -756,12 +845,12 @@ def add_staggers_data():
     user_id = data.get("user_id")  
     sbp = data.get("sbp")
     dbp = data.get("dbp")
-    his = int(data.get("his"))
-    smoke = int(data.get("smoke"))
+    his = data.get("his")
+    smoke = data.get("smoke")
     fbs = data.get("fbs")
     HbAlc = data.get("HbAlc")
     total_Cholesterol = data.get("total_Cholesterol")
-    Exe = int(data.get("Exe"))
+    Exe = data.get("Exe")
     bmi = data.get("bmi")
     family_his = int(data.get("family_his"))
     timestamp = datetime.now().strftime("%Y-%m-%d.%H-%M-%S")
@@ -781,7 +870,58 @@ def add_staggers_data():
         "timestamp": timestamp
     })
 
-    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ'})
+    h = []
+
+    if his == "1":
+        h = "มี"
+    else:
+        h = "ไม่มี"
+
+    s = []
+
+    if smoke == "0":
+        s = "ไม่สูบบุหรี่"
+    elif smoke == "1":
+        s = "หยุดสูบบุหรี่"
+    else:
+        s = "สูบบุหรี่"
+
+    e = []
+
+    if Exe == "0":
+        e = "ไม่ออกกำลังกาย"
+    elif Exe == "1":
+        e = "ออกกำลังกาย 150-200นาที"
+    else:
+        e = "ออกกำลังกาย >200 นาที"
+
+    f = []
+
+    if family_his == "1":
+        f = "มีประวัติ"
+    else:
+        f = "ไม่มีประวัติ"
+
+    # สร้างข้อความแจ้งเตือน
+    message = (
+
+        f"📌 ข้อมูลของคุณถูกบันทึกเรียบร้อยแล้ว!\n"
+        f"  ความดันโลหิต: {sbp}/{dbp} mmHg\n"
+        f"  ประวัติการรักษา: {h}\n"
+        f"  การสูบบุหรี่: {s}\n"
+        f"  ระดับน้ำตาลในเลือด: {fbs} mg/dL\n"
+        f"  ระดับ HbA1c: {HbAlc} %\n"
+        f"  ระดับคอเลสเตอรอล: {total_Cholesterol} mg/dL\n"
+        f"  การออกกำลังกาย: {e}\n"
+        f"  ดัชนีมวลกาย: {bmi} kg/m²\n"
+        f"  ประวัติครอบครัวเป็นโรคเบาหวาน: {f}\n"
+        f"  เวลาที่บันทึก: {timestamp}"
+    )
+
+    # ส่งข้อความไปยัง LINE
+    response = send_line_message(user_id, message)
+
+    return jsonify({'message': 'บันทึกข้อมูลสำเร็จ', 'line_response': response})
 
 
 
