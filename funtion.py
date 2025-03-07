@@ -49,6 +49,8 @@ LINE_ACCESS_TOKEN = "NeXMAZt6QoDOwz7ryhruPZ0xrkfHbWPhQVvA9mLII8Y0CAeOTB7zXUGhzs8
 
 ngrok = "https://a69c-223-205-176-129.ngrok-free.app"
 
+life = "https://liff.line.me/2003057525-1L9EGXEO"
+
 #การเปรียบเทียบ
 def calculate_average(data_list):
     averages = {}
@@ -521,7 +523,7 @@ def Checkup_Staggers():
     return user, reply_text, sbp, dbp, his, his_str, smoke, smoke_str, fbs, HbAlc, total_Cholesterol, Exe, Exe_str, bmi, family_his, family_his_str
 
 
-life = "https://liff.line.me/2003057525-1L9EGXEO"
+
 #เพิ่มข้อมูล
 def insertData():
     req = request.get_json(silent=True, force=True)
